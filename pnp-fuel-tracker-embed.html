@@ -129,7 +129,15 @@
     border: 1px solid var(--pnp-line);
     border-radius: 12px;
     overflow: hidden;
+    overflow-x: auto;                 /* never clip: if the table is wider than
+                                         the screen it scrolls instead of hiding
+                                         content. Mobile layout below keeps it
+                                         from needing to. */
+    -webkit-overflow-scrolling: touch;
   }
+  /* Compact change indicator that rides under the rate on small screens, so the
+     separate Change column can be dropped rather than clipped. Hidden on desktop. */
+  #pnp-fuel-tracker .ch-inline { display: none; }
   #pnp-fuel-tracker table {
     width: 100%;
     border-collapse: collapse;
@@ -294,10 +302,32 @@
 
   @media (max-width: 780px) {
     #pnp-fuel-tracker h2.pnp-h1 { font-size: 26px; }
+    /* Drop BOTH the Previous and the standalone Change columns on mobile; the
+       change rides under the rate instead. Leaves 3 columns that fit cleanly. */
     #pnp-fuel-tracker thead th.hide-mobile,
-    #pnp-fuel-tracker tbody td.hide-mobile { display: none; }
-    #pnp-fuel-tracker tbody td { padding: 12px 12px; }
-    #pnp-fuel-tracker thead th { padding: 10px 12px; }
+    #pnp-fuel-tracker tbody td.hide-mobile,
+    #pnp-fuel-tracker thead th.change,
+    #pnp-fuel-tracker tbody td.change { display: none; }
+    #pnp-fuel-tracker tbody td { padding: 12px 10px; }
+    #pnp-fuel-tracker thead th { padding: 10px 10px; }
+    #pnp-fuel-tracker table { font-size: 14px; }
+    #pnp-fuel-tracker tbody td.carrier { font-size: 14px; }
+    #pnp-fuel-tracker .ch-inline {
+      display: block;
+      margin-top: 5px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+  }
+  @media (max-width: 480px) {
+    #pnp-fuel-tracker { font-size: 16px; }
+    body { padding: 32px 12px; }
+    #pnp-fuel-tracker .pnp-lede { font-size: 15px; }
+    #pnp-fuel-tracker table { font-size: 13px; }
+    #pnp-fuel-tracker tbody td.carrier { font-size: 13px; }
+    #pnp-fuel-tracker tbody td,
+    #pnp-fuel-tracker thead th { padding: 10px 8px; }
+    #pnp-fuel-tracker tbody td.service { font-size: 12px; }
   }
 
   /* ===== EMBED END ===== */
@@ -328,7 +358,7 @@
           <th>Service</th>
           <th class="num">Current rate</th>
           <th class="num hide-mobile">Previous</th>
-          <th class="num">Change</th>
+          <th class="num change">Change</th>
         </tr>
       </thead>
       <tbody id="pnp-fuel-tbody"></tbody>
@@ -388,94 +418,94 @@
       {
         "name": "UPS Canada",
         "url": "https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges",
-        "lastVerified": "2026-06-23",
+        "lastVerified": "2026-07-13",
         "cadence": "weekly",
         "status": "ok",
         "services": [
           {
             "service": "Standard Service within Canada",
-            "current": 40.5,
-            "previous": 40.5
+            "current": 36,
+            "previous": 38.5
           },
           {
             "service": "Standard Service to the U.S.",
-            "current": 19.5,
-            "previous": 19.5
+            "current": 18.25,
+            "previous": 18.5
           },
           {
             "service": "International Express, Expedited & 3 Day Select",
-            "current": 33.5,
-            "previous": 33.5
+            "current": 31,
+            "previous": 31.25
           },
           {
             "service": "Domestic Express and Expedited",
-            "current": 31.25,
-            "previous": 31.25
+            "current": 29.5,
+            "previous": 29.25
           }
         ]
       },
       {
         "name": "FedEx Express",
         "url": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
-        "lastVerified": "2026-06-23",
+        "lastVerified": "2026-07-13",
         "cadence": "weekly",
         "status": "ok",
         "services": [
           {
             "service": "Intra-CAN",
-            "current": 36.5,
-            "previous": 36.5
+            "current": 34.5,
+            "previous": 33.5
           },
           {
             "service": "Intl.",
-            "current": 33.25,
-            "previous": 33.25
+            "current": 31,
+            "previous": 30.75
           }
         ]
       },
       {
         "name": "FedEx Ground and pickup services",
         "url": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
-        "lastVerified": "2026-06-23",
+        "lastVerified": "2026-07-13",
         "cadence": "weekly",
         "status": "ok",
         "services": [
           {
             "service": "Intra-CAN and pickup services",
-            "current": 36.5,
-            "previous": 36.5
+            "current": 34.5,
+            "previous": 33.5
           },
           {
             "service": "Intl.",
-            "current": 19.5,
-            "previous": 19.5
+            "current": 18.25,
+            "previous": 18.5
           }
         ]
       },
       {
         "name": "Purolator",
         "url": "https://www.purolator.com/en/courier-fuel-surcharges",
-        "lastVerified": "2026-06-11",
+        "lastVerified": "2026-07-13",
         "cadence": "weekly",
         "status": "ok",
         "services": [
           {
             "service": "Courier (all services and destinations)",
-            "current": 41.5,
-            "previous": null
+            "current": 39.5,
+            "previous": 41.5
           }
         ]
       },
       {
         "name": "Canpar Express",
         "url": "https://www.canpar.com/en/shipping/fuel_surcharge.htm",
-        "lastVerified": "2026-06-23",
+        "lastVerified": "2026-07-13",
         "cadence": "weekly",
         "status": "ok",
         "services": [
           {
             "service": "Domestic Canada",
-            "current": 34.8,
+            "current": 32.55,
             "previous": 34.8
           }
         ]
@@ -483,43 +513,43 @@
       {
         "name": "Loomis Express",
         "url": "https://www.loomisexpress.com/loomship/Services/FuelSurcharges",
-        "lastVerified": "2026-06-23",
+        "lastVerified": "2026-07-13",
         "cadence": "weekly",
         "status": "ok",
         "services": [
           {
             "service": "Domestic Express and Ground Service",
-            "current": 34.8,
+            "current": 32.55,
             "previous": 34.8
           },
           {
             "service": "Worldwide Service",
-            "current": 22.5,
-            "previous": 22.5
+            "current": 27.25,
+            "previous": 27
           }
         ]
       },
       {
         "name": "Canada Post",
         "url": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/company-policies/rates-taxes-surcharges/fuel-surcharges-on-mail-and-parcels.page",
-        "lastVerified": "2026-06-23",
+        "lastVerified": "2026-07-13",
         "cadence": "weekly",
         "status": "ok",
         "services": [
           {
             "service": "Domestic Services",
-            "current": 33.5,
-            "previous": 33.5
+            "current": 29,
+            "previous": 29.5
           },
           {
             "service": "USA and International Parcel Services",
-            "current": 20,
-            "previous": 20
+            "current": 17.75,
+            "previous": 18
           },
           {
             "service": "USA and International Packet Services",
-            "current": 18,
-            "previous": 18
+            "current": 15.75,
+            "previous": 16
           }
         ]
       }
@@ -538,6 +568,15 @@
     if (delta > 0) return `<span class="ch-pill ch-up"><span class="ch-arrow">▲</span>Up ${delta.toFixed(2)}%</span>`;
     if (delta < 0) return `<span class="ch-pill ch-down"><span class="ch-arrow">▼</span>Down ${Math.abs(delta).toFixed(2)}%</span>`;
     return `<span class="ch-pill ch-flat">No change</span>`;
+  }
+
+  // Compact form for the mobile inline indicator: arrow + number, no word, so
+  // it fits under the rate without widening the column.
+  function renderChangeCompact(curr, prev) {
+    const delta = +(curr - prev).toFixed(2);
+    if (delta > 0) return `<span class="ch-up"><span class="ch-arrow">▲</span> ${delta.toFixed(2)}%</span>`;
+    if (delta < 0) return `<span class="ch-down"><span class="ch-arrow">▼</span> ${Math.abs(delta).toFixed(2)}%</span>`;
+    return `<span class="ch-flat">No change</span>`;
   }
 
   function renderTable(fuelData) {
@@ -571,9 +610,11 @@
         const prevCell = (typeof svc.previous === 'number') ? svc.previous.toFixed(2) + '%' : '';
         const change = (typeof svc.current === 'number' && typeof svc.previous === 'number')
           ? renderChange(svc.current, svc.previous) : '';
+        const changeCompact = (typeof svc.current === 'number' && typeof svc.previous === 'number')
+          ? renderChangeCompact(svc.current, svc.previous) : '';
         cells += `
           <td class="service">${svc.service}</td>
-          <td class="num">${curr}</td>
+          <td class="num">${curr}<span class="ch-inline">${changeCompact}</span></td>
           <td class="num hide-mobile">${prevCell}</td>
           <td class="change">${change}</td>
         `;
