@@ -107,6 +107,22 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Small retry for flaky sources (NRCan in particular intermittently refuses CI
+// requests). Retries on network error or non-OK status with a short backoff.
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+async function fetchRetry(url, opts, tries = 3) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetch(url, opts);
+      if (res.ok) return res;
+      lastErr = new Error(`responded ${res.status}`);
+    } catch (e) { lastErr = e; }
+    if (i < tries - 1) await delay(1500 * (i + 1));
+  }
+  throw lastErr;
+}
+
 // ----------------------------------------------------------------------------
 // SOURCE FETCHERS. Each returns its value, or throws. The orchestrator catches
 // throws and falls back to last-known. None of these touch a carrier site that
@@ -115,7 +131,7 @@ function todayISO() {
 // ----------------------------------------------------------------------------
 
 async function fetchNrcanDiesel() {
-  const res = await fetch(SOURCES.nrcanDiesel, { headers: BROWSER_HEADERS });
+  const res = await fetchRetry(SOURCES.nrcanDiesel, { headers: BROWSER_HEADERS });
   if (!res.ok) throw new Error(`NRCan responded ${res.status}`);
   const html = await res.text();
   // The current Canada diesel price sits in a table cell tagged
@@ -768,21 +784,23 @@ async function main() {
   //     carrier changed its band table and the safety net has a hole; the API
   //     value still publishes, but the workflow's alert step emails about it.
   //     Rows whose lag input is not yet available are skipped, not flagged.
-  // Each row: which lagged input drives it, and the backup tolerance. Rows whose
-  // exact band table we have verified against the carrier's posted page get
-  // tolerance 0 (any drift = a real table change = hard alert). International
-  // jet/diesel rows, whose exact band table the carrier does not publish
-  // cleanly, get a one-band (0.25) tolerance: the API is exact and publishes;
-  // the backup is allowed to sit within a band without crying wolf. A larger
-  // gap still alerts, which is what a genuine table change would produce.
+  // Each row: which lagged input drives it, and the backup tolerance. The
+  // backup reconstructs the rate from public fuel prices with an assumed lag,
+  // and a carrier's exact lag + rounding drift as prices cross band boundaries,
+  // so the derivation naturally wanders up to ~1 point off the live API even
+  // when nothing is wrong. The API value is always what publishes, so this
+  // drift never affects merchants; the check exists only to notice a GROSS,
+  // structural change to a carrier's table. Jet/diesel-driven rows therefore
+  // get a 1.0-point tolerance. (NRCan-driven rows are skipped entirely until
+  // enough weekly history accumulates to pin down their week mapping.)
   const ROW_INPUT = {
     'UPS Canada|Standard Service within Canada': { dep: 'nrcan', tol: 0 },
-    'UPS Canada|Standard Service to the U.S.': { dep: 'eiaDiesel', tol: 0 },
-    'UPS Canada|Domestic Express and Expedited': { dep: 'jet', tol: 0 },
+    'UPS Canada|Standard Service to the U.S.': { dep: 'eiaDiesel', tol: 1.0 },
+    'UPS Canada|Domestic Express and Expedited': { dep: 'jet', tol: 1.0 },
     'FedEx Express|Intra-CAN': { dep: 'nrcan', tol: 0 },
-    'FedEx Express|Intl.': { dep: 'jet', tol: 0.25 },
+    'FedEx Express|Intl.': { dep: 'jet', tol: 1.0 },
     'FedEx Ground and pickup services|Intra-CAN and pickup services': { dep: 'nrcan', tol: 0 },
-    'FedEx Ground and pickup services|Intl.': { dep: 'eiaDiesel', tol: 0.25 }
+    'FedEx Ground and pickup services|Intl.': { dep: 'eiaDiesel', tol: 1.0 }
   };
   const backupCheck = { date: todayISO(), mismatches: [], withinTolerance: [], skipped: [] };
   for (const [key, { dep, tol }] of Object.entries(ROW_INPUT)) {

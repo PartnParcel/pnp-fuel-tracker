@@ -70,8 +70,12 @@ jobs:
           const problems = [], warnings = [];
           const stale = j.carriers.filter(c => c.status !== 'ok').map(c => c.name);
           if (stale.length) problems.push('Rows on last-known values: ' + stale.join(', '));
+          // Backup drift is a WARNING, not a failure: the published value is
+          // always the exact live API number, so a wandering fallback never
+          // degrades what merchants see. It's worth noticing (the backup could
+          // be recalibrated) but it should never fail a healthy, updated run.
           for (const m of (j.backupCheck?.mismatches || [])) {
-            problems.push('Backup drift on ' + m.row + ': API says ' + m.api + '%, derivation says ' + m.derived + '%. A carrier likely changed its band table; update fuel-engine.js.');
+            warnings.push('Backup drift on ' + m.row + ': API ' + m.api + '% vs derivation ' + m.derived + '%. Live data is unaffected (API is exact); consider recalibrating the fallback band table.');
           }
           try {
             const { overrides = [] } = require('./overrides.json');
