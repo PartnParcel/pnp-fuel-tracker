@@ -868,6 +868,18 @@ async function main() {
     }
   }
 
+  // Consecutive-week stale counter. A source (esp. NRCan / Canada Post / the
+  // Purolator API) intermittently 403s GitHub's datacenter IP for a single
+  // week, which is a transient blip on recent last-known data, not a real
+  // outage. Track how many weeks running a carrier has been stale so the alert
+  // can treat a one-week blip as a warning and only escalate a persistent
+  // outage (2+ weeks) to a failure.
+  for (const c of carriers) {
+    const pc = prevCarrier(prev, c.name);
+    const prevWeeks = (pc && pc.staleWeeks) || 0;
+    c.staleWeeks = (c.status !== 'ok') ? prevWeeks + 1 : 0;
+  }
+
   const output = {
     version: 1,
     generatedAt: new Date().toISOString(),

@@ -68,8 +68,14 @@ jobs:
           node -e "
           const j = require('./fuel-rates.json');
           const problems = [], warnings = [];
-          const stale = j.carriers.filter(c => c.status !== 'ok').map(c => c.name);
-          if (stale.length) problems.push('Rows on last-known values: ' + stale.join(', '));
+          // A one-week stale row is almost always a transient source block (a
+          // carrier/gov site 403ing GitHub's IP for a run); the value shown is
+          // recent last-known, so it's a WARNING. Only a source unreachable for
+          // 2+ weeks running is a real outage worth failing + emailing over.
+          const blip = j.carriers.filter(c => c.status !== 'ok' && (c.staleWeeks || 0) < 2).map(c => c.name);
+          const persistent = j.carriers.filter(c => c.status !== 'ok' && (c.staleWeeks || 0) >= 2).map(c => c.name);
+          if (blip.length) warnings.push('Rows on last-known this run (likely a transient source block): ' + blip.join(', '));
+          if (persistent.length) problems.push('Rows stale 2+ weeks (source persistently unreachable): ' + persistent.join(', '));
           // Backup drift is a WARNING, not a failure: the published value is
           // always the exact live API number, so a wandering fallback never
           // degrades what merchants see. It's worth noticing (the backup could

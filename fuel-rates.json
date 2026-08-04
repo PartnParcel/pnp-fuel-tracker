@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-04T11:51:18.130Z",
+  "generatedAt": "2026-08-04T12:43:48.190Z",
   "nextUpdate": "Every Monday morning",
   "inputs": {
-    "nrcanDieselCAD": null,
+    "nrcanDieselCAD": 2.29,
     "nrcanLagApplied": false,
     "eiaOnHighwayUSD": 5.31,
     "dieselAsOf": "2026-07-27",
@@ -78,7 +78,7 @@
     },
     {
       "date": "2026-08-04",
-      "nrcanDieselCAD": null,
+      "nrcanDieselCAD": 2.291,
       "eiaOnHighwayUSD": 5.313,
       "eiaJetGulfUSDLatest": 3.676
     }
@@ -111,7 +111,8 @@
           "current": 34.5,
           "previous": 33
         }
-      ]
+      ],
+      "staleWeeks": 0
     },
     {
       "name": "FedEx Express",
@@ -130,7 +131,8 @@
           "current": 36.5,
           "previous": 35.25
         }
-      ]
+      ],
+      "staleWeeks": 0
     },
     {
       "name": "FedEx Ground and pickup services",
@@ -149,13 +151,14 @@
           "current": 20.25,
           "previous": 19.75
         }
-      ]
+      ],
+      "staleWeeks": 0
     },
     {
       "name": "Purolator",
       "url": "https://www.purolator.com/en/courier-fuel-surcharges",
       "cadence": "weekly",
-      "status": "stale",
+      "status": "ok",
       "lastVerified": "2026-08-04",
       "services": [
         {
@@ -163,7 +166,8 @@
           "current": 36,
           "previous": 39.5
         }
-      ]
+      ],
+      "staleWeeks": 0
     },
     {
       "name": "Canpar Express",
@@ -177,7 +181,8 @@
           "current": 41.55,
           "previous": 39.3
         }
-      ]
+      ],
+      "staleWeeks": 0
     },
     {
       "name": "Loomis Express",
@@ -196,13 +201,14 @@
           "current": 21.5,
           "previous": 27.25
         }
-      ]
+      ],
+      "staleWeeks": 0
     },
     {
       "name": "Canada Post",
       "url": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/company-policies/rates-taxes-surcharges/fuel-surcharges-on-mail-and-parcels.page",
       "cadence": "weekly",
-      "status": "stale",
+      "status": "ok",
       "lastVerified": "2026-08-04",
       "services": [
         {
@@ -220,7 +226,8 @@
           "current": 19.5,
           "previous": 17.5
         }
-      ]
+      ],
+      "staleWeeks": 0
     }
   ]
 }
