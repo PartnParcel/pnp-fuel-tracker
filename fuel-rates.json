@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-04T11:50:07.971Z",
+  "generatedAt": "2026-08-04T11:51:18.130Z",
   "nextUpdate": "Every Monday morning",
   "inputs": {
-    "nrcanDieselCAD": 2.29,
+    "nrcanDieselCAD": null,
     "nrcanLagApplied": false,
     "eiaOnHighwayUSD": 5.31,
     "dieselAsOf": "2026-07-27",
@@ -78,7 +78,7 @@
     },
     {
       "date": "2026-08-04",
-      "nrcanDieselCAD": 2.291,
+      "nrcanDieselCAD": null,
       "eiaOnHighwayUSD": 5.313,
       "eiaJetGulfUSDLatest": 3.676
     }
@@ -155,7 +155,7 @@
       "name": "Purolator",
       "url": "https://www.purolator.com/en/courier-fuel-surcharges",
       "cadence": "weekly",
-      "status": "ok",
+      "status": "stale",
       "lastVerified": "2026-08-04",
       "services": [
         {
@@ -202,7 +202,7 @@
       "name": "Canada Post",
       "url": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/company-policies/rates-taxes-surcharges/fuel-surcharges-on-mail-and-parcels.page",
       "cadence": "weekly",
-      "status": "ok",
+      "status": "stale",
       "lastVerified": "2026-08-04",
       "services": [
         {
