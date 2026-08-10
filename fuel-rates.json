@@ -1,30 +1,35 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-04T12:45:03.667Z",
+  "generatedAt": "2026-08-10T11:50:50.354Z",
   "nextUpdate": "Every Monday morning",
   "inputs": {
-    "nrcanDieselCAD": 2.29,
+    "nrcanDieselCAD": 2.21,
     "nrcanLagApplied": false,
-    "eiaOnHighwayUSD": 5.31,
-    "dieselAsOf": "2026-07-27",
+    "eiaOnHighwayUSD": 5.35,
+    "dieselAsOf": "2026-08-03",
     "dieselLagApplied": true,
-    "eiaJetGulfUSD": 3.68,
-    "jetAsOf": "2026-07-24",
+    "eiaJetGulfUSD": 3.74,
+    "jetAsOf": "2026-07-31",
     "jetLagApplied": true
   },
   "backupCheck": {
-    "date": "2026-08-04",
+    "date": "2026-08-10",
     "mismatches": [],
     "withinTolerance": [
       {
         "row": "UPS Canada|Standard Service to the U.S.",
-        "api": 20.75,
-        "derived": 20.25
+        "api": 21,
+        "derived": 20.5
       },
       {
         "row": "UPS Canada|Domestic Express and Expedited",
-        "api": 34.5,
-        "derived": 33.75
+        "api": 34.75,
+        "derived": 34
+      },
+      {
+        "row": "FedEx Ground and pickup services|Intl.",
+        "api": 20.25,
+        "derived": 20.5
       }
     ],
     "skipped": [
@@ -81,6 +86,12 @@
       "nrcanDieselCAD": 2.291,
       "eiaOnHighwayUSD": 5.313,
       "eiaJetGulfUSDLatest": 3.676
+    },
+    {
+      "date": "2026-08-10",
+      "nrcanDieselCAD": 2.211,
+      "eiaOnHighwayUSD": 5.348,
+      "eiaJetGulfUSDLatest": 3.736
     }
   ],
   "carriers": [
@@ -89,27 +100,27 @@
       "url": "https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges",
       "cadence": "weekly",
       "status": "ok",
-      "lastVerified": "2026-08-04",
+      "lastVerified": "2026-08-10",
       "services": [
         {
           "service": "Standard Service within Canada",
-          "current": 43.5,
-          "previous": 39.5
+          "current": 45.5,
+          "previous": 43.5
         },
         {
           "service": "Standard Service to the U.S.",
-          "current": 20.75,
-          "previous": 19.75
+          "current": 21,
+          "previous": 20.75
         },
         {
           "service": "International Express, Expedited & 3 Day Select",
-          "current": 36.5,
-          "previous": 35.25
+          "current": 36.75,
+          "previous": 36.5
         },
         {
           "service": "Domestic Express and Expedited",
-          "current": 34.5,
-          "previous": 33
+          "current": 34.75,
+          "previous": 34.5
         }
       ],
       "staleWeeks": 0
@@ -119,17 +130,17 @@
       "url": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
       "cadence": "weekly",
       "status": "ok",
-      "lastVerified": "2026-08-04",
+      "lastVerified": "2026-08-10",
       "services": [
         {
           "service": "Intra-CAN",
-          "current": 42.5,
-          "previous": 40.5
+          "current": 43.5,
+          "previous": 42.5
         },
         {
           "service": "Intl.",
-          "current": 36.5,
-          "previous": 35.25
+          "current": 36.75,
+          "previous": 36.5
         }
       ],
       "staleWeeks": 0
@@ -139,12 +150,12 @@
       "url": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
       "cadence": "weekly",
       "status": "ok",
-      "lastVerified": "2026-08-04",
+      "lastVerified": "2026-08-10",
       "services": [
         {
           "service": "Intra-CAN and pickup services",
-          "current": 42.5,
-          "previous": 40.5
+          "current": 43.5,
+          "previous": 42.5
         },
         {
           "service": "Intl.",
@@ -159,7 +170,7 @@
       "url": "https://www.purolator.com/en/courier-fuel-surcharges",
       "cadence": "weekly",
       "status": "ok",
-      "lastVerified": "2026-08-04",
+      "lastVerified": "2026-08-10",
       "services": [
         {
           "service": "Courier (all services and destinations)",
@@ -174,12 +185,12 @@
       "url": "https://www.canpar.com/en/shipping/fuel_surcharge.htm",
       "cadence": "weekly",
       "status": "ok",
-      "lastVerified": "2026-08-04",
+      "lastVerified": "2026-08-10",
       "services": [
         {
           "service": "Domestic Canada",
-          "current": 41.55,
-          "previous": 39.3
+          "current": 42.3,
+          "previous": 41.55
         }
       ],
       "staleWeeks": 0
@@ -189,12 +200,12 @@
       "url": "https://www.loomisexpress.com/loomship/Services/FuelSurcharges",
       "cadence": "weekly",
       "status": "ok",
-      "lastVerified": "2026-08-04",
+      "lastVerified": "2026-08-10",
       "services": [
         {
           "service": "Domestic Express and Ground Service",
-          "current": 41.55,
-          "previous": 39.3
+          "current": 42.3,
+          "previous": 41.55
         },
         {
           "service": "Worldwide Service",
@@ -209,22 +220,22 @@
       "url": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/company-policies/rates-taxes-surcharges/fuel-surcharges-on-mail-and-parcels.page",
       "cadence": "weekly",
       "status": "ok",
-      "lastVerified": "2026-08-04",
+      "lastVerified": "2026-08-10",
       "services": [
         {
           "service": "Domestic Services",
-          "current": 36.5,
-          "previous": 32.5
+          "current": 38,
+          "previous": 36.5
         },
         {
           "service": "USA and International Parcel Services",
-          "current": 21.5,
-          "previous": 19.5
+          "current": 22.25,
+          "previous": 21.5
         },
         {
           "service": "USA and International Packet Services",
-          "current": 19.5,
-          "previous": 17.5
+          "current": 20.25,
+          "previous": 19.5
         }
       ],
       "staleWeeks": 0
