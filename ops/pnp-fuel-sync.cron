@@ -1,0 +1,4 @@
+# Publish crawler-visible rates within an hour of any GitHub refresh.
+# Install only with rollout approval; replaces the existing daily entry.
+MAILTO=""
+37 * * * * root /usr/local/bin/pnp-fuel-sync --apply >> /var/log/pnp-fuel-sync.log 2>&1
