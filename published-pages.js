@@ -42,8 +42,12 @@ function periodStart(today,cadence){
 }
 function previousForPeriod(carrier,previousCarrier,service,today){
  const prior=previousCarrier?.services?.find(s=>s.service===service.service);
- if(carrier.status!=='ok'||!prior||prior.current==null)return service.previous;
- const same=previousCarrier.lastVerified&&periodStart(previousCarrier.lastVerified,carrier.cadence)===periodStart(today,carrier.cadence);
- return same?(prior.previous??null):prior.current;
+ if(carrier.status!=='ok')return service.previous;
+ if(!prior||prior.current==null||!previousCarrier.lastVerified)return null;
+ const currentPeriod=periodStart(today,carrier.cadence);
+ const savedPeriod=periodStart(previousCarrier.lastVerified,carrier.cadence);
+ if(savedPeriod===currentPeriod)return prior.previous??null;
+ const precedingPeriod=periodStart(offset(currentPeriod,-1),carrier.cadence);
+ return savedPeriod===precedingPeriod?prior.current:null;
 }
 module.exports.previousForPeriod=previousForPeriod;

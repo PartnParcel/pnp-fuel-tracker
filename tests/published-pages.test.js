@@ -27,3 +27,11 @@ test('API fallback previous preserves stale and same-period values; monthly boun
  assert.equal(previousForPeriod({status:'ok',cadence:'monthly'},p,svc,'2026-11-01'),45.5);
  assert.equal(previousForPeriod({status:'ok',cadence:'monthly'},p,svc,'2026-11-02'),50);
 });
+
+test('API fallback suppresses comparisons across missing periods or absent history',()=>{
+ const {previousForPeriod}=require('../published-pages');
+ const c={status:'ok',cadence:'weekly'},s={service:'test',current:53,previous:53};
+ assert.equal(previousForPeriod(c,null,s,'2026-10-26'),null);
+ assert.equal(previousForPeriod(c,{lastVerified:'2026-10-12',services:[{service:'test',current:40}]},s,'2026-10-26'),null);
+ assert.equal(previousForPeriod({...c,cadence:'monthly'},{lastVerified:'2026-08-03',services:[{service:'test',current:40}]},s,'2026-10-26'),null);
+});

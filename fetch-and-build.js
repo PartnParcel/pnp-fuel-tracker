@@ -774,8 +774,6 @@ async function main() {
     for (const svc of c.services) {
       if (overriddenKeys.has(`${c.name}|${svc.service}`)) continue; // override owns previous
       if (sourcePreviousKeys.has(`${c.name}|${svc.service}`)) continue; // page supplied it
-      const ps = pc && (pc.services || []).find(s => s.service === svc.service);
-      if (!ps || ps.current == null) continue; // no prior data: leave as already set
       svc.previous = require('./published-pages').previousForPeriod(c,pc,svc,todayISO());
     }
   }
