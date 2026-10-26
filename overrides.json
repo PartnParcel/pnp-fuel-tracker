@@ -1,5 +1,42 @@
 {
   "_what": "Manually verified posted rates. While an entry is unexpired, it beats the derived estimate for that carrier and service. Use this when a posted number is confirmed (carrier page, account quote cross-check) and the derived value disagrees. Each entry expires automatically so a stale override can never linger past the carrier's next adjustment.",
   "_how": "carrier + service must match fuel-rates.json exactly. rate is the published percent. expires is the first day the override no longer applies (the carrier's next scheduled adjustment). previous is optional; omit it to suppress the week-over-week change pill rather than show a false comparison.",
-  "overrides": []
+  "overrides": [
+    {
+      "carrier": "UPS Canada",
+      "service": "Standard Service within Canada",
+      "rate": 53.0,
+      "previous": 52.5,
+      "verified": "2026-10-26",
+      "expires": "2026-11-02",
+      "source": "ups.com/ca fuel-surcharges 90-day history, read in Chrome 2026-10-26 (Julie session); UPS published-history fetch blocked by UPS bot check"
+    },
+    {
+      "carrier": "UPS Canada",
+      "service": "Standard Service to the U.S.",
+      "rate": 23.5,
+      "previous": 23.25,
+      "verified": "2026-10-26",
+      "expires": "2026-11-02",
+      "source": "ups.com/ca fuel-surcharges 90-day history, read in Chrome 2026-10-26 (Julie session); UPS published-history fetch blocked by UPS bot check"
+    },
+    {
+      "carrier": "UPS Canada",
+      "service": "International Express, Expedited & 3 Day Select",
+      "rate": 42.25,
+      "previous": 41.75,
+      "verified": "2026-10-26",
+      "expires": "2026-11-02",
+      "source": "ups.com/ca fuel-surcharges 90-day history, read in Chrome 2026-10-26 (Julie session); UPS published-history fetch blocked by UPS bot check"
+    },
+    {
+      "carrier": "UPS Canada",
+      "service": "Domestic Express and Expedited",
+      "rate": 38.75,
+      "previous": 38.25,
+      "verified": "2026-10-26",
+      "expires": "2026-11-02",
+      "source": "ups.com/ca fuel-surcharges 90-day history, read in Chrome 2026-10-26 (Julie session); UPS published-history fetch blocked by UPS bot check"
+    }
+  ]
 }
