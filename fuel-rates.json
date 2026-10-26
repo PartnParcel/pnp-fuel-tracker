@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-26T17:11:09.500Z",
-  "nextUpdate": "Every Monday morning",
+  "generatedAt": "2026-10-26T17:47:44.478Z",
+  "nextUpdate": "Checked daily; retried hourly on Mondays",
   "inputs": {
     "nrcanDieselCAD": 2.66,
     "nrcanLagApplied": false,
@@ -14,6 +14,7 @@
   },
   "backupCheck": {
     "date": "2026-10-26",
+    "compared": 2,
     "mismatches": [],
     "withinTolerance": [],
     "skipped": [
@@ -100,7 +101,7 @@
       "name": "UPS Canada",
       "url": "https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges",
       "cadence": "weekly",
-      "status": "ok",
+      "status": "stale",
       "lastVerified": "2026-10-26",
       "services": [
         {
@@ -124,7 +125,9 @@
           "previous": 38.25
         }
       ],
-      "staleWeeks": 0
+      "staleWeeks": 1,
+      "sourceError": "Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)",
+      "staleSince": "2026-10-26"
     },
     {
       "name": "FedEx Express",
@@ -144,7 +147,8 @@
           "previous": 41
         }
       ],
-      "staleWeeks": 0
+      "staleWeeks": 0,
+      "staleSince": null
     },
     {
       "name": "FedEx Ground and pickup services",
@@ -164,7 +168,8 @@
           "previous": 22.75
         }
       ],
-      "staleWeeks": 0
+      "staleWeeks": 0,
+      "staleSince": null
     },
     {
       "name": "Purolator",
@@ -179,7 +184,8 @@
           "previous": 45.5
         }
       ],
-      "staleWeeks": 0
+      "staleWeeks": 0,
+      "staleSince": null
     },
     {
       "name": "Canpar Express",
@@ -194,7 +200,8 @@
           "previous": 50.55
         }
       ],
-      "staleWeeks": 0
+      "staleWeeks": 0,
+      "staleSince": null
     },
     {
       "name": "Loomis Express",
@@ -214,7 +221,8 @@
           "previous": 23.75
         }
       ],
-      "staleWeeks": 0
+      "staleWeeks": 0,
+      "staleSince": null
     },
     {
       "name": "Canada Post",
@@ -225,21 +233,28 @@
       "services": [
         {
           "service": "Domestic Services",
-          "current": 47.5,
-          "previous": 47
+          "current": 40.3,
+          "previous": 39.9,
+          "listRate": 47.5,
+          "effectiveDate": "2026-10-26"
         },
         {
           "service": "USA and International Parcel Services",
           "current": 27,
-          "previous": 26.75
+          "previous": 26.75,
+          "listRate": null,
+          "effectiveDate": "2026-10-26"
         },
         {
           "service": "USA and International Packet Services",
           "current": 25,
-          "previous": 24.75
+          "previous": 24.75,
+          "listRate": null,
+          "effectiveDate": "2026-10-26"
         }
       ],
-      "staleWeeks": 0
+      "staleWeeks": 0,
+      "staleSince": null
     }
   ]
 }
