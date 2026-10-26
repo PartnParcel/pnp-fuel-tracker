@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-26T17:47:44.478Z",
+  "generatedAt": "2026-10-26T17:49:31.362Z",
   "nextUpdate": "Checked daily; retried hourly on Mondays",
   "inputs": {
     "nrcanDieselCAD": 2.66,
@@ -101,33 +101,33 @@
       "name": "UPS Canada",
       "url": "https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges",
       "cadence": "weekly",
-      "status": "stale",
+      "status": "ok",
       "lastVerified": "2026-10-26",
       "services": [
         {
           "service": "Standard Service within Canada",
-          "current": 55.5,
+          "current": 53,
           "previous": 52.5
         },
         {
           "service": "Standard Service to the U.S.",
-          "current": 23,
+          "current": 23.5,
           "previous": 23.25
         },
         {
           "service": "International Express, Expedited & 3 Day Select",
-          "current": 41.5,
-          "previous": 41
+          "current": 42.25,
+          "previous": 41.75
         },
         {
           "service": "Domestic Express and Expedited",
-          "current": 38,
+          "current": 38.75,
           "previous": 38.25
         }
       ],
-      "staleWeeks": 1,
-      "sourceError": "Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)",
-      "staleSince": "2026-10-26"
+      "staleWeeks": 0,
+      "sourceError": "Unterminated fractional number in JSON at position 2 (line 1 column 3)",
+      "staleSince": null
     },
     {
       "name": "FedEx Express",
