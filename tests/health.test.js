@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {problems}=require('../ops/health');
 const initial=require('../fuel-rates.json');
-function fresh(){const d=structuredClone(initial);d.generatedAt='2026-10-26T15:00:00Z';d.carriers.forEach(c=>{c.status='ok';c.lastVerified='2026-10-26'});d.backupCheck={mismatches:[]};return d;}
+function fresh(){const d=structuredClone(initial);d.generatedAt='2026-10-26T15:00:00Z';d.carriers.forEach(c=>{c.status='ok';c.lastVerified='2026-10-26';c.services.forEach(s=>{delete s.effectiveDate;delete s.effectiveTo})});d.backupCheck={mismatches:[]};return d;}
 const now=new Date('2026-10-26T17:00:00Z');
 test('healthy carrier data produces no exception',()=>assert.deepEqual(problems(fresh(),now),[]));
 test('missing carrier, stale rate, invalid value, and stopped scheduler produce exceptions',()=>{

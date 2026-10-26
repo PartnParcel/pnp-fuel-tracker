@@ -39,4 +39,12 @@ class RenderTests(unittest.TestCase):
         advanced=sync.replace_rows(newer,newer,'next','2026-11-02T12:00:00Z')
         self.assertIn('>next</tbody>',advanced)
         self.assertEqual(advanced.count('pnp-fuel-generated-at:'),1)
+    def test_rejected_feed_keeps_watermark_and_marks_saved_rows_stale(self):
+        body=sync.render(data())
+        base='<tbody id="pnp-fuel-tbody">'+body+'</tbody>'
+        saved=sync.replace_rows(base,base,body,'2026-10-26T19:20:12.842Z')
+        fallback=sync.replace_rows(saved,saved,sync.mark_stale(body),None)
+        self.assertIn('pnp-verified stale',fallback)
+        self.assertIn('pnp-fuel-generated-at: 2026-10-26T19:20:12.842Z',fallback)
+        self.assertIn('40.30%',fallback)
 if __name__=='__main__':unittest.main()

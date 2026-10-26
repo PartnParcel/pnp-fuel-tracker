@@ -192,12 +192,13 @@ def main():
     if not TBODY.search(html):
         sys.exit("tbody marker missing from widget html, refusing to write")
 
+    accepted_timestamp = data.get("generatedAt") if body is not None else None
     if body is None:
         body = mark_stale(TBODY.search(html).group(2))
     source = args.install_widget.read_text() if args.install_widget else html
     if len(TBODY.findall(source)) != 1:
         sys.exit('Expected one fuel tbody in replacement widget')
-    new_html = replace_rows(html, source, body, data.get("generatedAt"))
+    new_html = replace_rows(html, source, body, accepted_timestamp)
     if new_html == html:
         print("fuel-sync: already current (%s)" % data.get("generatedAt", "?"))
         return
