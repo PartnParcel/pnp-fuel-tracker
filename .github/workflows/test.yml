@@ -18,5 +18,22 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
-      - name: Verify live carrier page readers and browser fallback
-        run: node ops/source-smoke.js
+      - name: Verify production source chain without publishing
+        # Secrets are available only to this repository's own reviewed branches.
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          FUEL_OUTPUT_FILE: /tmp/fuel-validation.json
+          FEDEX_CLIENT_ID: ${{ secrets.FEDEX_CLIENT_ID }}
+          FEDEX_CLIENT_SECRET: ${{ secrets.FEDEX_CLIENT_SECRET }}
+          FEDEX_ACCOUNT: ${{ secrets.FEDEX_ACCOUNT }}
+          UPS_CLIENT_ID: ${{ secrets.UPS_CLIENT_ID }}
+          UPS_CLIENT_SECRET: ${{ secrets.UPS_CLIENT_SECRET }}
+          UPS_ACCOUNT: ${{ secrets.UPS_ACCOUNT }}
+          PUROLATOR_KEY: ${{ secrets.PUROLATOR_KEY }}
+          PUROLATOR_PASSWORD: ${{ secrets.PUROLATOR_PASSWORD }}
+          PUROLATOR_ACCOUNT: ${{ secrets.PUROLATOR_ACCOUNT }}
+          PUROLATOR_BASE: https://webservices.purolator.com
+        run: |
+          cp fuel-rates.json "$FUEL_OUTPUT_FILE"
+          node fetch-and-build.js
+          node ops/validate-release.js "$FUEL_OUTPUT_FILE"
