@@ -59,14 +59,16 @@ const BANDS = {
 
   'ups-standard-canada': {
     // Input: NRCan Canadian diesel retail price (CAD/L). 2-week lag. Weekly Monday.
-    formula: true, anchorPrice: 2.02, anchorRate: 39.50, step: 0.02, increment: 0.50,
-    validMin: 1.40, validMax: 2.70, verified: '2026-06-10'
+    // Recalibrated to UPS's posted table, week of Oct 26 2026 (CAD 2.46 = 49.50%).
+    formula: true, anchorPrice: 2.02, anchorRate: 38.50, step: 0.02, increment: 0.50,
+    validMin: 1.40, validMax: 2.80, verified: '2026-10-26'
   },
 
   'ups-standard-us': {
     // Input: EIA U.S. On-Highway diesel (USD/gallon). 2-week lag. Weekly Monday.
-    formula: true, anchorPrice: 4.72, anchorRate: 18.75, step: 0.09, increment: 0.25,
-    validMin: 4.30, validMax: 6.40, verified: '2026-06-10'
+    // Recalibrated to UPS's posted table, week of Oct 26 2026 (USD 5.62 = 21.75%).
+    formula: true, anchorPrice: 4.72, anchorRate: 19.25, step: 0.09, increment: 0.25,
+    validMin: 4.30, validMax: 7.00, verified: '2026-10-26'
   },
 
   'ups-international-jet': {
@@ -77,14 +79,15 @@ const BANDS = {
     // week from Aug 3 to Oct 19 (jet $3.43 to $4.58) and matched through Jul 27.
     // No API covers this row, so recheck it against the posted history quarterly.
     formula: true, anchorPrice: 2.99, anchorRate: 33.00, step: 0.04, increment: 0.25,
-    validMin: 2.40, validMax: 4.60, verified: '2026-10-26'
+    validMin: 2.40, validMax: 4.90, verified: '2026-10-26'
   },
 
   'ups-domestic-jet': {
     // Input: EIA U.S. Gulf Coast Jet Fuel (USD/gallon). 2-week lag. Weekly Monday.
     // Covers UPS Domestic Express and Expedited (Canada).
-    formula: true, anchorPrice: 2.95, anchorRate: 30.25, step: 0.05, increment: 0.25,
-    validMin: 2.40, validMax: 4.60, verified: '2026-06-10'
+    // Recalibrated to UPS's posted table, week of Oct 26 2026 (USD 4.15 = 37.00%).
+    formula: true, anchorPrice: 2.95, anchorRate: 31.00, step: 0.05, increment: 0.25,
+    validMin: 2.40, validMax: 4.90, verified: '2026-10-26'
   },
 
   // FedEx Canada. Source: fedex.com fuel surcharges page.
