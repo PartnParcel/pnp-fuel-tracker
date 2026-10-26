@@ -1,77 +1,23 @@
-# Fuel Tracker Deploy Guide
+# Reviewed rollout (explicit approval required)
 
-Plain steps to make the Canadian Fuel Surcharge Tracker update itself every week, with no developer and without TJ. You can do all of this yourself. It takes about 30 minutes once, then it runs on its own forever.
+## What changes
 
-There are two parts. Part 1 is the data job, which lives entirely in GitHub and runs itself. Part 2 is one edit to the tracker page on partnparcel.com so it reads the data the job produces.
+Merge PR1 after regression CI and review. Merged source changes automatically start a refresh using existing GitHub API secrets. The workflow requests `contents: write` for the existing data commit and `issues: write` to maintain one exception issue. It never sends email directly, changes credentials, or authorizes an agent to deploy repairs.
 
----
+The business-box changes below are separate from merging. Do not call a prepared script installed or an unrun workflow healthy.
 
-## What you are setting up
+## Acceptance and installation
 
-A free GitHub robot that wakes up every Monday morning, reads the current fuel prices from five free government and carrier sources, calculates every carrier's rate, and saves the result to a file. Your website reads that file. Nobody touches it after setup. If a source ever breaks, the page keeps showing last week's number with a yellow dot, and GitHub emails you so it gets fixed with one AI prompt.
+1. Verify the approved head SHA, CI, and remote branch before merge. After merge inspect the refresh run. If a scheduled old run was already queued, explicitly dispatch the workflow on `main` so the corrected source runs. Verify all seven carriers, UPS International 42.25% and Canada Post 40.30%/47.50% for the October 26 week, proper source dates and no unexpected stale/conflict rows. Later dates must use current official source values, not these examples.
+2. On business-box, preserve the existing `/usr/local/bin/pnp-fuel-sync`, `/etc/cron.d/pnp-fuel-sync` and the full Elementor data for post 1710 in a private dated backup. Obtain the approved repository files through a clean pinned checkout; do not overwrite an unrelated dirty tree. Install `ops/fuel-sync.py` root-owned as `/usr/local/bin/pnp-fuel-sync` (0755).
+3. Run `/usr/local/bin/pnp-fuel-sync --install-widget /path/to/approved/pnp-fuel-tracker-embed.html` first in dry-run. Then add `--apply` for the approved one-time widget upgrade. It touches only widget 450cb46f, saves the complete old Elementor value, rejects a detected concurrent edit and verifies the saved data. Inspect all page widgets before/after. Do not rerun a whole-widget replacement in routine cron.
+4. Replace the existing cron entry with `ops/pnp-fuel-sync.cron` (0644, root-owned). Run the exact cron command once, then again to confirm no-op behavior. Verify customer page and HTML source on desktop and 375px/390px phone widths; test data-fetch failure keeps saved rows visibly stale. Compare cached/public pages with origin; confirm the temporary note and source dates agree. Check `/var/log/pnp-fuel-sync.log` after the next scheduled invocation.
+5. Confirm the automated exception reporter has no open actionable issue after a healthy refresh. Test failure/recovery and duplicate suppression with local mocked GitHub calls, not live test alerts. Actual full-source credentialed execution and the next cron invocation are release acceptance, not implied by local tests.
 
----
+## Rollback
 
-## Part 1: The data job (GitHub)
+Disable the new cron first if its write path is faulty. Restore the saved script and cron files. Restore the saved Elementor JSON using `wp post meta update 1710 _elementor_data` under the existing WordPress user, only after confirming no newer human edits would be overwritten; read it back and purge the page cache. Preserve newer edits by restoring only the fuel widget when necessary. GitHub rollback uses a reviewed revert PR; do not force-push or restore old incorrect rates as current. If data cannot be verified, keep last-known values visibly stale.
 
-You need a free GitHub account. If you do not have one, create it at github.com.
+## Known limits
 
-1. **Create a new repository.** On GitHub, click the plus icon, New repository. Name it something like `pnp-fuel-tracker`. Set it to Public (free Actions minutes). Click Create.
-
-2. **Add the files.** Click "uploading an existing file" or "Add file, Create new file" and add these four files from your Claude Code folder:
-   - `fetch-and-build.js` (the data job)
-   - `fuel-engine.js` (the rate math, already built)
-   - `fuel-rates.json` (the starting data, so the page has something to show on day one)
-   - `.github/workflows/fuel-update.yml` (the weekly schedule). To create this one, click Add file, Create new file, and type `.github/workflows/fuel-update.yml` as the name. GitHub will make the folders for you. Paste in the contents of `fuel-update.yml`.
-
-3. **Turn the robot on.** Go to the Actions tab in your repo. If it asks you to enable workflows, click the green button to enable. You will see "Weekly Fuel Surcharge Update" listed.
-
-4. **Run it once by hand to test.** Click "Weekly Fuel Surcharge Update," then "Run workflow," then the green "Run workflow" button. Wait about a minute. Refresh. A green checkmark means it worked and `fuel-rates.json` now has fresh numbers. A red X means a source had trouble; click in to see which one, and that is the one-line fix.
-
-5. **Get the data file's public web address.** Click `fuel-rates.json` in your repo, then click "Raw." Copy that URL from your browser bar. It looks like `https://raw.githubusercontent.com/yourname/pnp-fuel-tracker/main/fuel-rates.json`. You need this for Part 2.
-
-That is the whole data side. It now runs every Monday at 7am Eastern on its own.
-
----
-
-## Part 2: Point the tracker page at the data (partnparcel.com)
-
-You own the WordPress login, so you can do this without TJ.
-
-1. Log in to partnparcel.com WordPress.
-
-2. Open the Canadian Fuel Surcharge Tracker page for editing. Find the block that holds the tracker (it is the embedded HTML widget TJ added).
-
-3. In the widget's code, there is one line near the top of the script that sets where the data comes from. Change it to the Raw URL you copied in Part 1, step 5. The exact line to change is documented in the updated `fuel-tracker.html` file, marked with a comment that says `DATA SOURCE`.
-
-4. Save and preview. The table should now fill in with the current rates from your GitHub file, and every Monday it will refresh on its own.
-
-If editing the embedded HTML feels risky, the safest path is to replace the whole widget block with the updated `fuel-tracker.html` content, which already has the data-source line and the fetch logic built in. Copy the whole file, paste it into the page's custom HTML block, change the one DATA SOURCE line, save.
-
----
-
-## What maintenance looks like
-
-Almost none. The job runs weekly on its own. The only time you touch it is if a government agency moves a file, which happens maybe once a year. When that happens:
-
-1. GitHub emails you that the Monday run failed.
-2. The tracker keeps showing last week's numbers with yellow dots, so nothing looks broken to visitors.
-3. You open the failed run, copy the error, and paste it to Claude with "fix this one source URL in fetch-and-build.js." One prompt, one file change, recommit. Back to green.
-
-No scraper to babysit. No firewall to fight. No subscription to pay.
-
----
-
-## The five sources, for reference
-
-If you ever want to verify a number by hand, these are where the data comes from. All free, all open.
-
-NRCan Canadian diesel: the source for UPS Standard within Canada, both FedEx Intra-Canada services, and Purolator.
-
-EIA US on-highway diesel: the source for UPS Standard to the US and FedEx Ground International.
-
-EIA Gulf Coast jet fuel: the source for UPS Express services, UPS Domestic Express, FedEx Express International, and Loomis Worldwide. This is the same EIA series UPS and FedEx use themselves.
-
-Canpar public endpoint: the exact rate for Canpar Domestic, which also sets Loomis Domestic because they share a rate table.
-
-Canada Post page: the three Canada Post service rates, read straight from their published page.
+GitHub scheduled jobs can start late. Multiple attempts reduce dependence on one Monday run; the 36-hour age guard and current-week checks prevent indefinite green status. The server cron synchronizes the published feed, not the carrier API credentials. A complete GitHub outage needs the normal infrastructure response; this change does not introduce a second credential store or scheduler account.

@@ -1,23 +1,31 @@
-# .github/workflows/fuel-update.yml
-# Runs the fuel data job every Monday morning and commits the fresh rates.
-# Free on a public GitHub repo. Once this is turned on, it runs itself.
-# If a source ever fails, the job still commits (using last-known values for
-# the failed carrier) and GitHub emails you that the run had errors.
-
-name: Weekly Fuel Surcharge Update
+name: Fuel Surcharge Update
 
 on:
   schedule:
-    # 11:00 UTC every Monday = 7:00am ET (6:00am during standard time).
-    # Carriers post Monday morning, so this picks up the new week.
-    - cron: '0 11 * * 1'
-  workflow_dispatch: {}   # lets you run it by hand any time from the Actions tab
+    # Retry throughout Monday; check twice daily on other days for corrections.
+    # Off-hour minute reduces contention. GitHub scheduling is not a clock SLA.
+    - cron: '17 * * * 1'
+    - cron: '17 11,17 * * 0,2-6'
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - '*.js'
+      - 'package*.json'
+      - 'ops/**'
+      - '.github/workflows/fuel-update.yml'
 
 permissions:
-  contents: write          # allows the job to commit the updated JSON
+  contents: write
+  issues: write
+
+concurrency:
+  group: fuel-publish
+  cancel-in-progress: false
 
 jobs:
   update-rates:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -30,13 +38,17 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install xlsx cheerio fast-xml-parser
+        run: npm ci --ignore-scripts
+
+      - name: Regression tests
+        run: npm test
 
       - name: Fetch fuel data and rebuild rates
+        id: build
         env:
           # FedEx Rating API credentials (clean tracker account, list rates only).
           # Set these in Settings -> Secrets and variables -> Actions. If absent,
-          # the job falls back to the band-table estimate for FedEx rows.
+          # the job retains last-known FedEx rows and marks them stale.
           FEDEX_CLIENT_ID: ${{ secrets.FEDEX_CLIENT_ID }}
           FEDEX_CLIENT_SECRET: ${{ secrets.FEDEX_CLIENT_SECRET }}
           FEDEX_ACCOUNT: ${{ secrets.FEDEX_ACCOUNT }}
@@ -50,6 +62,7 @@ jobs:
         run: node fetch-and-build.js
 
       - name: Commit the updated rates
+        id: publish
         run: |
           git config user.name "fuel-bot"
           git config user.email "fuel-bot@users.noreply.github.com"
@@ -57,43 +70,9 @@ jobs:
           git diff --staged --quiet || git commit -m "Fuel rates updated $(date -u +%Y-%m-%d)"
           git push
 
-      # Runs AFTER the commit so the site always gets the best available data.
-      # Two severities: PROBLEMS fail the run (red X + email) because the data is
-      # degraded and needs a human — a row fell back to last-known, or the backup
-      # derivation disagrees with a live API (a carrier likely changed its band
-      # table). WARNINGS only log — e.g. a manual override nearing expiry — so a
-      # routine heads-up never makes a healthy, fully-updated run look broken.
-      - name: Alert on stale rows or backup drift
-        run: |
-          node -e "
-          const j = require('./fuel-rates.json');
-          const problems = [], warnings = [];
-          // A one-week stale row is almost always a transient source block (a
-          // carrier/gov site 403ing GitHub's IP for a run); the value shown is
-          // recent last-known, so it's a WARNING. Only a source unreachable for
-          // 2+ weeks running is a real outage worth failing + emailing over.
-          const blip = j.carriers.filter(c => c.status !== 'ok' && (c.staleWeeks || 0) < 2).map(c => c.name);
-          const persistent = j.carriers.filter(c => c.status !== 'ok' && (c.staleWeeks || 0) >= 2).map(c => c.name);
-          if (blip.length) warnings.push('Rows on last-known this run (likely a transient source block): ' + blip.join(', '));
-          if (persistent.length) problems.push('Rows stale 2+ weeks (source persistently unreachable): ' + persistent.join(', '));
-          // Backup drift is a WARNING, not a failure: the published value is
-          // always the exact live API number, so a wandering fallback never
-          // degrades what merchants see. It's worth noticing (the backup could
-          // be recalibrated) but it should never fail a healthy, updated run.
-          for (const m of (j.backupCheck?.mismatches || [])) {
-            warnings.push('Backup drift on ' + m.row + ': API ' + m.api + '% vs derivation ' + m.derived + '%. Live data is unaffected (API is exact); consider recalibrating the fallback band table.');
-          }
-          try {
-            const { overrides = [] } = require('./overrides.json');
-            const today = new Date().toISOString().slice(0, 10);
-            const soon = new Date(Date.now() + 8 * 86400e3).toISOString().slice(0, 10);
-            for (const o of overrides) {
-              if (o.expires && o.expires > today && o.expires <= soon) {
-                warnings.push('Heads-up: override expires ' + o.expires + ' for ' + o.carrier + ' / ' + o.service + '. Confirm the API covers it or refresh the verified rate.');
-              }
-            }
-          } catch {}
-          if (warnings.length) console.log('WARNINGS:\n' + warnings.join('\n'));
-          if (problems.length) { console.error('PROBLEMS:\n' + problems.join('\n')); process.exit(1); }
-          console.log('All rows fresh. Backup agrees with the APIs. Nothing to do.');
-          "
+      - name: Maintain one actionable exception issue
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FUEL_BUILD_OUTCOME: ${{ steps.build.outcome == 'success' && steps.publish.outcome == 'success' && 'success' || 'failure' }}
+        run: node ops/report-health.js

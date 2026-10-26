@@ -1,0 +1,659 @@
+{ "FuelSurchargeResponse": { 
+"FuelSurchargeRates_en" :{
+"USDieselWorldwideStandard" :[
+{"Field1" : "USD 5.62"
+,"Field2" : "USD 5.71"
+,"Field3" : "21.75%"
+},
+{"Field1" : "USD 5.71"
+,"Field2" : "USD 5.80"
+,"Field3" : "22.00%"
+},
+{"Field1" : "USD 5.80"
+,"Field2" : "USD 5.89"
+,"Field3" : "22.25%"
+},
+{"Field1" : "USD 5.89"
+,"Field2" : "USD 5.98"
+,"Field3" : "22.50%"
+},
+{"Field1" : "USD 5.98"
+,"Field2" : "USD 6.07"
+,"Field3" : "22.75%"
+},
+{"Field1" : "USD 6.07"
+,"Field2" : "USD 6.16"
+,"Field3" : "23.00%"
+},
+{"Field1" : "USD 6.16"
+,"Field2" : "USD 6.25"
+,"Field3" : "23.25%"
+},
+{"Field1" : "USD 6.25"
+,"Field2" : "USD 6.34"
+,"Field3" : "23.50%"
+},
+{"Field1" : "USD 6.34"
+,"Field2" : "USD 6.43"
+,"Field3" : "23.75%"
+},
+{"Field1" : "USD 6.43"
+,"Field2" : "USD 6.52"
+,"Field3" : "24.00%"
+},
+{"Field1" : "USD 6.52"
+,"Field2" : "USD 6.61"
+,"Field3" : "24.25%"
+},
+{"Field1" : "USD 6.61"
+,"Field2" : "USD 6.70"
+,"Field3" : "24.50%"
+},
+{"Field1" : "USD 6.70"
+,"Field2" : "USD 6.79"
+,"Field3" : "24.75%"
+},
+{"Field1" : "USD 6.79"
+,"Field2" : "USD 6.88"
+,"Field3" : "25.00%"
+},
+{"Field1" : "USD 6.88"
+,"Field2" : "USD 6.97"
+,"Field3" : "25.25%"
+}],
+"WithinCanadaDiesel" :[
+{"Field1" : "CAD 2.46"
+,"Field2" : "CAD 2.48"
+,"Field3" : "49.50%"
+},
+{"Field1" : "CAD 2.48"
+,"Field2" : "CAD 2.50"
+,"Field3" : "50.00%"
+},
+{"Field1" : "CAD 2.50"
+,"Field2" : "CAD 2.52"
+,"Field3" : "50.50%"
+},
+{"Field1" : "CAD 2.52"
+,"Field2" : "CAD 2.54"
+,"Field3" : "51.00%"
+},
+{"Field1" : "CAD 2.54"
+,"Field2" : "CAD 2.56"
+,"Field3" : "51.50%"
+},
+{"Field1" : "CAD 2.56"
+,"Field2" : "CAD 2.58"
+,"Field3" : "52.00%"
+},
+{"Field1" : "CAD 2.58"
+,"Field2" : "CAD 2.60"
+,"Field3" : "52.50%"
+},
+{"Field1" : "CAD 2.60"
+,"Field2" : "CAD 2.62"
+,"Field3" : "53.00%"
+},
+{"Field1" : "CAD 2.62"
+,"Field2" : "CAD 2.64"
+,"Field3" : "53.50%"
+},
+{"Field1" : "CAD 2.64"
+,"Field2" : "CAD 2.66"
+,"Field3" : "54.00%"
+},
+{"Field1" : "CAD 2.66"
+,"Field2" : "CAD 2.68"
+,"Field3" : "54.50%"
+},
+{"Field1" : "CAD 2.68"
+,"Field2" : "CAD 2.70"
+,"Field3" : "55.00%"
+},
+{"Field1" : "CAD 2.70"
+,"Field2" : "CAD 2.72"
+,"Field3" : "55.50%"
+},
+{"Field1" : "CAD 2.72"
+,"Field2" : "CAD 2.74"
+,"Field3" : "56.00%"
+},
+{"Field1" : "CAD 2.74"
+,"Field2" : "CAD 2.76"
+,"Field3" : "56.50%"
+}],
+"USGCJetFuel" :[
+{"Field1" : "USD 4.19"
+,"Field2" : "USD 4.23"
+,"Field3" : "40.50%"
+},
+{"Field1" : "USD 4.23"
+,"Field2" : "USD 4.27"
+,"Field3" : "40.75%"
+},
+{"Field1" : "USD 4.27"
+,"Field2" : "USD 4.31"
+,"Field3" : "41.00%"
+},
+{"Field1" : "USD 4.31"
+,"Field2" : "USD 4.35"
+,"Field3" : "41.25%"
+},
+{"Field1" : "USD 4.35"
+,"Field2" : "USD 4.39"
+,"Field3" : "41.50%"
+},
+{"Field1" : "USD 4.39"
+,"Field2" : "USD 4.43"
+,"Field3" : "41.75%"
+},
+{"Field1" : "USD 4.43"
+,"Field2" : "USD 4.47"
+,"Field3" : "42.00%"
+},
+{"Field1" : "USD 4.47"
+,"Field2" : "USD 4.51"
+,"Field3" : "42.25%"
+},
+{"Field1" : "USD 4.51"
+,"Field2" : "USD 4.55"
+,"Field3" : "42.50%"
+},
+{"Field1" : "USD 4.55"
+,"Field2" : "USD 4.59"
+,"Field3" : "42.75%"
+},
+{"Field1" : "USD 4.59"
+,"Field2" : "USD 4.63"
+,"Field3" : "43.00%"
+},
+{"Field1" : "USD 4.63"
+,"Field2" : "USD 4.67"
+,"Field3" : "43.25%"
+},
+{"Field1" : "USD 4.67"
+,"Field2" : "USD 4.71"
+,"Field3" : "43.50%"
+},
+{"Field1" : "USD 4.71"
+,"Field2" : "USD 4.75"
+,"Field3" : "43.75%"
+},
+{"Field1" : "USD 4.75"
+,"Field2" : "USD 4.79"
+,"Field3" : "44.00%"
+}],
+"USGCJetFuelDomesticExpressExpedited" :[
+{"Field1" : "USD 4.15"
+,"Field2" : "USD 4.20"
+,"Field3" : "37.00%"
+},
+{"Field1" : "USD 4.20"
+,"Field2" : "USD 4.25"
+,"Field3" : "37.25%"
+},
+{"Field1" : "USD 4.25"
+,"Field2" : "USD 4.30"
+,"Field3" : "37.50%"
+},
+{"Field1" : "USD 4.30"
+,"Field2" : "USD 4.35"
+,"Field3" : "37.75%"
+},
+{"Field1" : "USD 4.35"
+,"Field2" : "USD 4.40"
+,"Field3" : "38.00%"
+},
+{"Field1" : "USD 4.40"
+,"Field2" : "USD 4.45"
+,"Field3" : "38.25%"
+},
+{"Field1" : "USD 4.45"
+,"Field2" : "USD 4.50"
+,"Field3" : "38.50%"
+},
+{"Field1" : "USD 4.50"
+,"Field2" : "USD 4.55"
+,"Field3" : "38.75%"
+},
+{"Field1" : "USD 4.55"
+,"Field2" : "USD 4.60"
+,"Field3" : "39.00%"
+},
+{"Field1" : "USD 4.60"
+,"Field2" : "USD 4.65"
+,"Field3" : "39.25%"
+},
+{"Field1" : "USD 4.65"
+,"Field2" : "USD 4.70"
+,"Field3" : "39.50%"
+},
+{"Field1" : "USD 4.70"
+,"Field2" : "USD 4.75"
+,"Field3" : "39.75%"
+},
+{"Field1" : "USD 4.75"
+,"Field2" : "USD 4.80"
+,"Field3" : "40.00%"
+},
+{"Field1" : "USD 4.80"
+,"Field2" : "USD 4.85"
+,"Field3" : "40.25%"
+},
+{"Field1" : "USD 4.85"
+,"Field2" : "USD 4.90"
+,"Field3" : "40.50%"
+}
+]
+},
+"SurchargeHistory_en" :{
+"RevenueSurchargeHistory" :[
+{"Field1" : "26/10/2026"
+,"Field2" : "23.50%"
+,"Field3" : "53.00%"
+,"Field4" : "42.25%"
+,"Field5" : "38.75%"
+},
+{"Field1" : "19/10/2026"
+,"Field2" : "23.25%"
+,"Field3" : "52.50%"
+,"Field4" : "41.75%"
+,"Field5" : "38.25%"
+},
+{"Field1" : "12/10/2026"
+,"Field2" : "23.25%"
+,"Field3" : "55.00%"
+,"Field4" : "41.75%"
+,"Field5" : "38.25%"
+},
+{"Field1" : "05/10/2026"
+,"Field2" : "23.75%"
+,"Field3" : "58.00%"
+,"Field4" : "41.50%"
+,"Field5" : "38.00%"
+},
+{"Field1" : "28/09/2026"
+,"Field2" : "24.25%"
+,"Field3" : "54.00%"
+,"Field4" : "42.75%"
+,"Field5" : "39.00%"
+},
+{"Field1" : "21/09/2026"
+,"Field2" : "23.50%"
+,"Field3" : "52.00%"
+,"Field4" : "41.75%"
+,"Field5" : "38.25%"
+},
+{"Field1" : "14/09/2026"
+,"Field2" : "22.50%"
+,"Field3" : "48.00%"
+,"Field4" : "39.75%"
+,"Field5" : "36.50%"
+},
+{"Field1" : "07/09/2026"
+,"Field2" : "21.50%"
+,"Field3" : "48.50%"
+,"Field4" : "37.50%"
+,"Field5" : "34.75%"
+},
+{"Field1" : "31/08/2026"
+,"Field2" : "21.75%"
+,"Field3" : "47.50%"
+,"Field4" : "38.75%"
+,"Field5" : "35.75%"
+},
+{"Field1" : "24/08/2026"
+,"Field2" : "21.25%"
+,"Field3" : "44.50%"
+,"Field4" : "37.75%"
+,"Field5" : "35.00%"
+},
+{"Field1" : "17/08/2026"
+,"Field2" : "20.75%"
+,"Field3" : "46.50%"
+,"Field4" : "35.75%"
+,"Field5" : "33.25%"
+},
+{"Field1" : "10/08/2026"
+,"Field2" : "21.00%"
+,"Field3" : "45.50%"
+,"Field4" : "37.50%"
+,"Field5" : "34.75%"
+},
+{"Field1" : "03/08/2026"
+,"Field2" : "20.75%"
+,"Field3" : "43.50%"
+,"Field4" : "37.25%"
+,"Field5" : "34.50%"
+}]
+},
+"FuelSurchargeRates_fr" :{
+"USDieselWorldwideStandard" :[
+{"Field1" : "5,62 USD"
+,"Field2" : "5,71 USD"
+,"Field3" : "21,75%"
+},
+{"Field1" : "5,71 USD"
+,"Field2" : "5,80 USD"
+,"Field3" : "22,00%"
+},
+{"Field1" : "5,80 USD"
+,"Field2" : "5,89 USD"
+,"Field3" : "22,25%"
+},
+{"Field1" : "5,89 USD"
+,"Field2" : "5,98 USD"
+,"Field3" : "22,50%"
+},
+{"Field1" : "5,98 USD"
+,"Field2" : "6,07 USD"
+,"Field3" : "22,75%"
+},
+{"Field1" : "6,07 USD"
+,"Field2" : "6,16 USD"
+,"Field3" : "23,00%"
+},
+{"Field1" : "6,16 USD"
+,"Field2" : "6,25 USD"
+,"Field3" : "23,25%"
+},
+{"Field1" : "6,25 USD"
+,"Field2" : "6,34 USD"
+,"Field3" : "23,50%"
+},
+{"Field1" : "6,34 USD"
+,"Field2" : "6,43 USD"
+,"Field3" : "23,75%"
+},
+{"Field1" : "6,43 USD"
+,"Field2" : "6,52 USD"
+,"Field3" : "24,00%"
+},
+{"Field1" : "6,52 USD"
+,"Field2" : "6,61 USD"
+,"Field3" : "24,25%"
+},
+{"Field1" : "6,61 USD"
+,"Field2" : "6,70 USD"
+,"Field3" : "24,50%"
+},
+{"Field1" : "6,70 USD"
+,"Field2" : "6,79 USD"
+,"Field3" : "24,75%"
+},
+{"Field1" : "6,79 USD"
+,"Field2" : "6,88 USD"
+,"Field3" : "25,00%"
+},
+{"Field1" : "6,88 USD"
+,"Field2" : "6,97 USD"
+,"Field3" : "25,25%"
+}],
+"WithinCanadaDiesel" :[
+{"Field1" : "2,46 CAD"
+,"Field2" : "2,48 CAD"
+,"Field3" : "49,50%"
+},
+{"Field1" : "2,48 CAD"
+,"Field2" : "2,50 CAD"
+,"Field3" : "50,00%"
+},
+{"Field1" : "2,50 CAD"
+,"Field2" : "2,52 CAD"
+,"Field3" : "50,50%"
+},
+{"Field1" : "2,52 CAD"
+,"Field2" : "2,54 CAD"
+,"Field3" : "51,00%"
+},
+{"Field1" : "2,54 CAD"
+,"Field2" : "2,56 CAD"
+,"Field3" : "51,50%"
+},
+{"Field1" : "2,56 CAD"
+,"Field2" : "2,58 CAD"
+,"Field3" : "52,00%"
+},
+{"Field1" : "2,58 CAD"
+,"Field2" : "2,60 CAD"
+,"Field3" : "52,50%"
+},
+{"Field1" : "2,60 CAD"
+,"Field2" : "2,62 CAD"
+,"Field3" : "53,00%"
+},
+{"Field1" : "2,62 CAD"
+,"Field2" : "2,64 CAD"
+,"Field3" : "53,50%"
+},
+{"Field1" : "2,64 CAD"
+,"Field2" : "2,66 CAD"
+,"Field3" : "54,00%"
+},
+{"Field1" : "2,66 CAD"
+,"Field2" : "2,68 CAD"
+,"Field3" : "54,50%"
+},
+{"Field1" : "2,68 CAD"
+,"Field2" : "2,70 CAD"
+,"Field3" : "55,00%"
+},
+{"Field1" : "2,70 CAD"
+,"Field2" : "2,72 CAD"
+,"Field3" : "55,50%"
+},
+{"Field1" : "2,72 CAD"
+,"Field2" : "2,74 CAD"
+,"Field3" : "56,00%"
+},
+{"Field1" : "2,74 CAD"
+,"Field2" : "2,76 CAD"
+,"Field3" : "56,50%"
+}],
+"USGCJetFuel" :[
+{"Field1" : "4,19 USD"
+,"Field2" : "4,23 USD"
+,"Field3" : "40,50%"
+},
+{"Field1" : "4,23 USD"
+,"Field2" : "4,27 USD"
+,"Field3" : "40,75%"
+},
+{"Field1" : "4,27 USD"
+,"Field2" : "4,31 USD"
+,"Field3" : "41,00%"
+},
+{"Field1" : "4,31 USD"
+,"Field2" : "4,35 USD"
+,"Field3" : "41,25%"
+},
+{"Field1" : "4,35 USD"
+,"Field2" : "4,39 USD"
+,"Field3" : "41,50%"
+},
+{"Field1" : "4,39 USD"
+,"Field2" : "4,43 USD"
+,"Field3" : "41,75%"
+},
+{"Field1" : "4,43 USD"
+,"Field2" : "4,47 USD"
+,"Field3" : "42,00%"
+},
+{"Field1" : "4,47 USD"
+,"Field2" : "4,51 USD"
+,"Field3" : "42,25%"
+},
+{"Field1" : "4,51 USD"
+,"Field2" : "4,55 USD"
+,"Field3" : "42,50%"
+},
+{"Field1" : "4,55 USD"
+,"Field2" : "4,59 USD"
+,"Field3" : "42,75%"
+},
+{"Field1" : "4,59 USD"
+,"Field2" : "4,63 USD"
+,"Field3" : "43,00%"
+},
+{"Field1" : "4,63 USD"
+,"Field2" : "4,67 USD"
+,"Field3" : "43,25%"
+},
+{"Field1" : "4,67 USD"
+,"Field2" : "4,71 USD"
+,"Field3" : "43,50%"
+},
+{"Field1" : "4,71 USD"
+,"Field2" : "4,75 USD"
+,"Field3" : "43,75%"
+},
+{"Field1" : "4,75 USD"
+,"Field2" : "4,79 USD"
+,"Field3" : "44,00%"
+}],
+"USGCJetFuelDomesticExpressExpedited" :[
+{"Field1" : "4,15 USD"
+,"Field2" : "4,20 USD"
+,"Field3" : "37,00%"
+},
+{"Field1" : "4,20 USD"
+,"Field2" : "4,25 USD"
+,"Field3" : "37,25%"
+},
+{"Field1" : "4,25 USD"
+,"Field2" : "4,30 USD"
+,"Field3" : "37,50%"
+},
+{"Field1" : "4,30 USD"
+,"Field2" : "4,35 USD"
+,"Field3" : "37,75%"
+},
+{"Field1" : "4,35 USD"
+,"Field2" : "4,40 USD"
+,"Field3" : "38,00%"
+},
+{"Field1" : "4,40 USD"
+,"Field2" : "4,45 USD"
+,"Field3" : "38,25%"
+},
+{"Field1" : "4,45 USD"
+,"Field2" : "4,50 USD"
+,"Field3" : "38,50%"
+},
+{"Field1" : "4,50 USD"
+,"Field2" : "4,55 USD"
+,"Field3" : "38,75%"
+},
+{"Field1" : "4,55 USD"
+,"Field2" : "4,60 USD"
+,"Field3" : "39,00%"
+},
+{"Field1" : "4,60 USD"
+,"Field2" : "4,65 USD"
+,"Field3" : "39,25%"
+},
+{"Field1" : "4,65 USD"
+,"Field2" : "4,70 USD"
+,"Field3" : "39,50%"
+},
+{"Field1" : "4,70 USD"
+,"Field2" : "4,75 USD"
+,"Field3" : "39,75%"
+},
+{"Field1" : "4,75 USD"
+,"Field2" : "4,80 USD"
+,"Field3" : "40,00%"
+},
+{"Field1" : "4,80 USD"
+,"Field2" : "4,85 USD"
+,"Field3" : "40,25%"
+},
+{"Field1" : "4,85 USD"
+,"Field2" : "4,90 USD"
+,"Field3" : "40,50%"
+}
+]
+},
+"SurchargeHistory_fr" :{
+"RevenueSurchargeHistory" :[
+{"Field1" : "26/10/2026"
+,"Field2" : "23,50%"
+,"Field3" : "53,00%"
+,"Field4" : "42,25%"
+,"Field5" : "38,75%"
+},
+{"Field1" : "19/10/2026"
+,"Field2" : "23,25%"
+,"Field3" : "52,50%"
+,"Field4" : "41,75%"
+,"Field5" : "38,25%"
+},
+{"Field1" : "12/10/2026"
+,"Field2" : "23,25%"
+,"Field3" : "55,00%"
+,"Field4" : "41,75%"
+,"Field5" : "38,25%"
+},
+{"Field1" : "05/10/2026"
+,"Field2" : "23,75%"
+,"Field3" : "58,00%"
+,"Field4" : "41,50%"
+,"Field5" : "38,00%"
+},
+{"Field1" : "28/09/2026"
+,"Field2" : "24,25%"
+,"Field3" : "54,00%"
+,"Field4" : "42,75%"
+,"Field5" : "39,00%"
+},
+{"Field1" : "21/09/2026"
+,"Field2" : "23,50%"
+,"Field3" : "52,00%"
+,"Field4" : "41,75%"
+,"Field5" : "38,25%"
+},
+{"Field1" : "14/09/2026"
+,"Field2" : "22,50%"
+,"Field3" : "48,00%"
+,"Field4" : "39,75%"
+,"Field5" : "36,50%"
+},
+{"Field1" : "07/09/2026"
+,"Field2" : "21,50%"
+,"Field3" : "48,50%"
+,"Field4" : "37,50%"
+,"Field5" : "34,75%"
+},
+{"Field1" : "31/08/2026"
+,"Field2" : "21,75%"
+,"Field3" : "47,50%"
+,"Field4" : "38,75%"
+,"Field5" : "35,75%"
+},
+{"Field1" : "24/08/2026"
+,"Field2" : "21,25%"
+,"Field3" : "44,50%"
+,"Field4" : "37,75%"
+,"Field5" : "35,00%"
+},
+{"Field1" : "17/08/2026"
+,"Field2" : "20,75%"
+,"Field3" : "46,50%"
+,"Field4" : "35,75%"
+,"Field5" : "33,25%"
+},
+{"Field1" : "10/08/2026"
+,"Field2" : "21,00%"
+,"Field3" : "45,50%"
+,"Field4" : "37,50%"
+,"Field5" : "34,75%"
+},
+{"Field1" : "03/08/2026"
+,"Field2" : "20,75%"
+,"Field3" : "43,50%"
+,"Field4" : "37,25%"
+,"Field5" : "34,50%"
+}]
+}
+}
+}

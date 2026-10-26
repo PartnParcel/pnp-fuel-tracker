@@ -352,11 +352,11 @@
   <div class="pnp-meta">
     <div class="pnp-meta-item">
       <span class="pnp-meta-label">Next update</span>
-      <span class="pnp-meta-value"><span class="pnp-live-dot"></span><span id="pnp-next-update">May 19, 2026</span></span>
+      <span class="pnp-meta-value"><span class="pnp-live-dot"></span><span id="pnp-next-update">Checked daily</span></span>
     </div>
     <div class="pnp-meta-item">
       <span class="pnp-meta-label">Update cadence</span>
-      <span class="pnp-meta-value">Weekly, every Monday morning</span>
+      <span class="pnp-meta-value">Daily checks; hourly Monday retries</span>
     </div>
   </div>
 
@@ -415,156 +415,10 @@
   // DATA SOURCE. This is the only line to change at deploy time.
   // Paste the Raw URL of fuel-rates.json from your GitHub repo here.
   // Example: https://raw.githubusercontent.com/yourname/pnp-fuel-tracker/main/fuel-rates.json
-  // The weekly GitHub job keeps that file current. The widget reads it on load.
-  // If the fetch fails for any reason, the widget falls back to the values
-  // baked in below so the page is never blank.
+  // Automated refreshes keep that file current. If fetching fails, retain
+  // server-rendered last-known rows, visibly marked stale; never invent rates.
   // ===========================================================================
   const DATA_SOURCE = 'https://raw.githubusercontent.com/PartnParcel/pnp-fuel-tracker/main/fuel-rates.json';
-
-  // Fallback data, used only if DATA_SOURCE is empty or unreachable.
-  const FALLBACK_DATA = {
-    "nextUpdate": "Every Monday morning",
-    "carriers": [
-      {
-        "name": "UPS Canada",
-        "url": "https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges",
-        "lastVerified": "2026-07-13",
-        "cadence": "weekly",
-        "status": "ok",
-        "services": [
-          {
-            "service": "Standard Service within Canada",
-            "current": 36,
-            "previous": 38.5
-          },
-          {
-            "service": "Standard Service to the U.S.",
-            "current": 18.25,
-            "previous": 18.5
-          },
-          {
-            "service": "International Express, Expedited & 3 Day Select",
-            "current": 31,
-            "previous": 31.25
-          },
-          {
-            "service": "Domestic Express and Expedited",
-            "current": 29.5,
-            "previous": 29.25
-          }
-        ]
-      },
-      {
-        "name": "FedEx Express",
-        "url": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
-        "lastVerified": "2026-07-13",
-        "cadence": "weekly",
-        "status": "ok",
-        "services": [
-          {
-            "service": "Intra-CAN",
-            "current": 34.5,
-            "previous": 33.5
-          },
-          {
-            "service": "Intl.",
-            "current": 31,
-            "previous": 30.75
-          }
-        ]
-      },
-      {
-        "name": "FedEx Ground and pickup services",
-        "url": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
-        "lastVerified": "2026-07-13",
-        "cadence": "weekly",
-        "status": "ok",
-        "services": [
-          {
-            "service": "Intra-CAN and pickup services",
-            "current": 34.5,
-            "previous": 33.5
-          },
-          {
-            "service": "Intl.",
-            "current": 18.25,
-            "previous": 18.5
-          }
-        ]
-      },
-      {
-        "name": "Purolator",
-        "url": "https://www.purolator.com/en/courier-fuel-surcharges",
-        "lastVerified": "2026-07-13",
-        "cadence": "weekly",
-        "status": "ok",
-        "services": [
-          {
-            "service": "Courier (all services and destinations)",
-            "current": 39.5,
-            "previous": 41.5
-          }
-        ]
-      },
-      {
-        "name": "Canpar Express",
-        "url": "https://www.canpar.com/en/shipping/fuel_surcharge.htm",
-        "lastVerified": "2026-07-13",
-        "cadence": "weekly",
-        "status": "ok",
-        "services": [
-          {
-            "service": "Domestic Canada",
-            "current": 32.55,
-            "previous": 34.8
-          }
-        ]
-      },
-      {
-        "name": "Loomis Express",
-        "url": "https://www.loomisexpress.com/loomship/Services/FuelSurcharges",
-        "lastVerified": "2026-07-13",
-        "cadence": "weekly",
-        "status": "ok",
-        "services": [
-          {
-            "service": "Domestic Express and Ground Service",
-            "current": 32.55,
-            "previous": 34.8
-          },
-          {
-            "service": "Worldwide Service",
-            "current": 27.25,
-            "previous": 27
-          }
-        ]
-      },
-      {
-        "name": "Canada Post",
-        "url": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/company-policies/rates-taxes-surcharges/fuel-surcharges-on-mail-and-parcels.page",
-        "lastVerified": "2026-07-13",
-        "cadence": "weekly",
-        "status": "ok",
-        "services": [
-          {
-            "service": "Domestic Services",
-            "current": 29,
-            "previous": 29.5
-          },
-          {
-            "service": "USA and International Parcel Services",
-            "current": 17.75,
-            "previous": 18
-          },
-          {
-            "service": "USA and International Packet Services",
-            "current": 15.75,
-            "previous": 16
-          }
-        ]
-      }
-    ]
-  };
 
   function formatVerified(iso) {
     if (!iso) return 'pending';
@@ -590,6 +444,16 @@
   }
 
   function renderTable(fuelData) {
+    // A stopped scheduler must not leave an old green "verified" label forever.
+    const age = (Date.now() - Date.parse(fuelData.generatedAt)) / 3600000;
+    const staleFeed = !Number.isFinite(age) || age > 36 || age < -0.1;
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+    const week = new Date(today + 'T12:00:00Z');
+    week.setUTCDate(week.getUTCDate() - (week.getUTCDay() + 6) % 7);
+    const weekStart = week.toISOString().slice(0,10);
+    fuelData = { ...fuelData, carriers: fuelData.carriers.map(c => ({ ...c,
+      status: staleFeed || !c.lastVerified || c.lastVerified < weekStart ? 'stale' : c.status
+    })) };
     const tbody = root.querySelector('#pnp-fuel-tbody');
     const rows = [];
 
@@ -644,14 +508,22 @@
 
   // Load live data from DATA_SOURCE, fall back to baked-in values on any failure.
   function load() {
-    if (!DATA_SOURCE) { renderTable(FALLBACK_DATA); return; }
     fetch(DATA_SOURCE, { cache: 'no-store' })
       .then(r => { if (!r.ok) throw new Error('fetch failed ' + r.status); return r.json(); })
       .then(data => {
         if (!data || !Array.isArray(data.carriers) || !data.carriers.length) throw new Error('empty data');
         renderTable(data);
       })
-      .catch(() => renderTable(FALLBACK_DATA));
+      .catch(() => {
+        root.querySelectorAll('.pnp-verified').forEach(el => {
+          el.classList.add('stale');
+          el.title = 'Live data could not be fetched; showing the saved table';
+          el.innerHTML = el.innerHTML.replace(/verified /, 'last verified ');
+        });
+        if (!root.querySelector('#pnp-fuel-tbody tr')) {
+          root.querySelector('#pnp-fuel-tbody').innerHTML = '<tr><td colspan="5">Current rates are temporarily unavailable. Please check the carrier pages.</td></tr>';
+        }
+      });
   }
 
   load();
