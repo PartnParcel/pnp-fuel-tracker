@@ -24,6 +24,11 @@ class RenderTests(unittest.TestCase):
         self.assertIn('<s>47.50%</s>',stale)
         self.assertEqual(sync.mark_stale(stale),stale)
         self.assertEqual(sync.mark_stale('<p>Unrelated widget</p>'),'<p>Unrelated widget</p>')
+    def test_source_period_is_visible_and_expired_rate_is_stale(self):
+        d=data();d['carriers'][0]['services'][0].update(effectiveDate='2025-01-04',effectiveTo='2025-01-10')
+        rendered=sync.render(d)
+        self.assertIn('Applies 2025-01-04–2025-01-10',rendered)
+        self.assertIn('pnp-verified stale',rendered)
     def test_source_text_escaped(self):
         d=data();d['carriers'][0]['services'][0]['service']='<script>bad</script>';self.assertIn('&lt;script&gt;',sync.render(d))
 if __name__=='__main__':unittest.main()

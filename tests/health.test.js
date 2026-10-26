@@ -21,3 +21,8 @@ test('Monday data stays valid through Sunday; next Monday requires verification'
  const d=fresh();assert.deepEqual(problems(d,new Date('2026-11-01T17:00:00Z')),[]);
  assert.ok(problems(d,new Date('2026-11-02T17:00:00Z')).length);
 });
+
+test('Saturday effective-period expiry is flagged even within the Monday verification week',()=>{
+ const d=fresh();d.carriers[0].services[0].effectiveTo='2026-10-30';
+ assert.ok(problems(d,new Date('2026-10-31T17:00:00Z')).some(x=>x.includes('effective period expired')));
+});

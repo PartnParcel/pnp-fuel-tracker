@@ -7,7 +7,7 @@ async function renderedRead(url,parse,today){
  if(!Object.values(URLS).includes(url))throw Error('Unsupported browser source');
  const profile=await fs.mkdtemp(path.join(os.tmpdir(),'fuel-browser-'));
  const child=spawn(process.env.CHROME_BIN||'google-chrome',['--headless=new','--no-sandbox','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--remote-allow-origins=*','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{detached:true,stdio:'ignore',env:{PATH:process.env.PATH,HOME:profile,LANG:'en_US.UTF-8'}});
- let launchError,ws;child.on('error',e=>{launchError=e;});const deadline=Date.now()+45000;let last='Browser startup timed out';
+ let launchError,ws;child.on('error',e=>{launchError=e;});const deadline=Date.now()+45000;let last='Browser startup timed out',pageSummary='';
  try{
   let lines;while(Date.now()<deadline){if(launchError)throw launchError;try{lines=(await fs.readFile(path.join(profile,'DevToolsActivePort'),'utf8')).trim().split('\n');break;}catch{await sleep(100);}}
   if(!lines)throw Error(last);
@@ -17,8 +17,8 @@ async function renderedRead(url,parse,today){
   let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data),p=pending.get(m.id);if(p){pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);}};
   const call=(method,params={},sessionId)=>new Promise((resolve,reject)=>{const key=++id;const timer=setTimeout(()=>{pending.delete(key);reject(Error('Browser command timeout'));},5000);pending.set(key,{resolve,reject,timer});ws.send(JSON.stringify({id:key,method,params,sessionId}));});
   await call('Page.enable');await call('Page.navigate',{url});
-  while(Date.now()<deadline){const result=await call('Runtime.evaluate',{expression:'document.documentElement.outerHTML',returnByValue:true});try{return parse(result.result.value,today);}catch(e){last=e.message;}await sleep(500);}
-  throw Error('Rendered page did not validate: '+last);
+  while(Date.now()<deadline){const result=await call('Runtime.evaluate',{expression:'document.documentElement.outerHTML',returnByValue:true});pageSummary=String(result.result.value||'').match(/<title[^>]*>([^<]*)/i)?.[1]||'no title';try{return parse(result.result.value,today);}catch(e){last=e.message;}await sleep(500);}
+  throw Error('Rendered page did not validate: '+last+'; title='+pageSummary);
  }finally{
   ws?.close();if(child.pid){try{process.kill(-child.pid,'SIGTERM');}catch{}await sleep(200);try{process.kill(-child.pid,'SIGKILL');}catch{}}
   await fs.rm(profile,{recursive:true,force:true,maxRetries:5,retryDelay:100}).catch(()=>{});
