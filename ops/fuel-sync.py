@@ -67,7 +67,7 @@ def render(data):
                 status = 'stale'
         except (KeyError, ValueError, TypeError):
             status = 'stale'
-        label = {"stale": "last verified", "failed": "source failed"}.get(status, "verified")
+        label = {"stale": "last verified", "failed": "source failed"}.get(status, "checked")
         cls = status if status in ("stale", "failed") else ""
         for i, s in enumerate(svcs):
             cells = ""
@@ -95,6 +95,8 @@ def render(data):
             note = ''
             if isinstance(s.get('listRate'), (int, float)):
                 note = '<span class="pnp-list-rate">Temporary rate · list <s>%s</s></span>' % pct(s['listRate'])
+            if s.get('effectiveDate') and s.get('effectiveTo'):
+                note += '<span class="pnp-list-rate">Applies %s–%s</span>' % (esc(s['effectiveDate']), esc(s['effectiveTo']))
             compact = '<span class="ch-inline">%s</span>' % change
             cells += (
                 '<td class="service">%s</td><td class="num">%s%s%s</td>'

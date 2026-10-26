@@ -466,7 +466,7 @@
 
         if (isFirstOfGroup) {
           const statusClass = carrier.status === 'stale' ? 'stale' : carrier.status === 'failed' ? 'failed' : '';
-          const statusLabel = carrier.status === 'stale' ? 'last verified' : carrier.status === 'failed' ? 'source failed' : 'verified';
+          const statusLabel = carrier.status === 'stale' ? 'last verified' : carrier.status === 'failed' ? 'source failed' : 'checked';
           const cadence = carrier.cadence === 'monthly' ? 'resets monthly' : 'resets weekly';
           cells += `
             <td class="carrier" rowspan="${rowspan}">
@@ -486,13 +486,14 @@
         // charged, with the struck-through list rate beside it.
         const listNote = (typeof svc.listRate === 'number' && typeof svc.current === 'number')
           ? `<span class="pnp-list-rate" title="Temporary reduced rate; the carrier's list rate is ${svc.listRate.toFixed(2)}%">Temporary rate · list <s>${svc.listRate.toFixed(2)}%</s></span>` : '';
+        const periodNote = svc.effectiveDate && svc.effectiveTo ? `<span class="pnp-list-rate">Applies ${formatVerified(svc.effectiveDate)}–${formatVerified(svc.effectiveTo)}</span>` : '';
         const change = (typeof svc.current === 'number' && typeof svc.previous === 'number')
           ? renderChange(svc.current, svc.previous) : '';
         const changeCompact = (typeof svc.current === 'number' && typeof svc.previous === 'number')
           ? renderChangeCompact(svc.current, svc.previous) : '';
         cells += `
           <td class="service">${svc.service}</td>
-          <td class="num">${curr}${listNote}<span class="ch-inline">${changeCompact}</span></td>
+          <td class="num">${curr}${listNote}${periodNote}<span class="ch-inline">${changeCompact}</span></td>
           <td class="num hide-mobile">${prevCell}</td>
           <td class="change">${change}</td>
         `;
