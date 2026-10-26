@@ -72,8 +72,12 @@ const BANDS = {
   'ups-international-jet': {
     // Input: EIA U.S. Gulf Coast Jet Fuel (USD/gallon). 2-week lag. Weekly Monday.
     // Covers UPS International Express, Expedited, and 3 Day Select.
-    formula: true, anchorPrice: 2.99, anchorRate: 32.25, step: 0.04, increment: 0.25,
-    validMin: 2.40, validMax: 4.60, verified: '2026-06-10'
+    // UPS raised this table 0.75 points from the week of Aug 3 2026: the old
+    // anchor (32.25) ran exactly 0.75 below UPS's posted 90-day history every
+    // week from Aug 3 to Oct 19 (jet $3.43 to $4.58) and matched through Jul 27.
+    // No API covers this row, so recheck it against the posted history quarterly.
+    formula: true, anchorPrice: 2.99, anchorRate: 33.00, step: 0.04, increment: 0.25,
+    validMin: 2.40, validMax: 4.60, verified: '2026-10-26'
   },
 
   'ups-domestic-jet': {

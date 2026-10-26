@@ -238,20 +238,66 @@ async function fetchCanadaPost() {
   if (!res.ok) throw new Error(`Canada Post responded ${res.status}`);
   const html = await res.text();
   const $ = cheerio.load(html);
-  const text = $('body').text().replace(/\s+/g, ' ');
-  // Each Canada Post service line appears as a label followed by a percentage.
-  function rateAfter(label) {
-    const re = new RegExp(label + '[^0-9]{0,40}([0-9]{1,2}\\.[0-9]{2})\\s*%', 'i');
-    const m = text.match(re);
-    return m ? parseFloat(m[1]) : null;
+
+  // The page holds one table per week, captioned "Oct 26, 2026 - Nov 1, 2026:",
+  // newest first, and posts next week's table a few days early. Use the table
+  // whose week contains today; the one after it is the prior week.
+  const weeks = [];
+  $('table').each((_, t) => {
+    const cap = $(t).find('caption').first().text();
+    const m = cap.match(/([A-Z][a-z]{2} \d{1,2}, \d{4})\s*-\s*([A-Z][a-z]{2} \d{1,2}, \d{4})/);
+    if (!m) return; // the fuel-index tables further down have no date range
+    const iso = s => new Date(s + ' UTC').toISOString().slice(0, 10);
+    weeks.push({ table: t, start: iso(m[1]), end: iso(m[2]) });
+  });
+  const today = todayISO();
+  const idx = weeks.findIndex(w => w.start <= today && today <= w.end);
+  if (idx < 0) throw new Error(`Canada Post has no table for the week of ${today}`);
+
+  // When Canada Post offers temporary relief it strikes through the list rate
+  // and prints the rate actually charged beside it ("47.00% 39.90%*"). Publish
+  // the charged rate and keep the list rate alongside. When the relief ends the
+  // strikethrough goes away, the cell holds one number again, and listRate
+  // returns to null with no code change.
+  function readWeek(table) {
+    const out = {};
+    $(table).find('tbody tr').each((_, tr) => {
+      const label = $(tr).find('td').first().text().replace(/\s+/g, ' ').trim();
+      const cell = $(tr).find('td').eq(1);
+      const pcts = s => [...s.matchAll(/([0-9]{1,2}\.[0-9]{2})\s*%/g)].map(m => parseFloat(m[1]));
+      const struck = cell.find('[style*="line-through"], s, del, strike');
+      const listRates = pcts(struck.text());
+      struck.remove();
+      const charged = pcts(cell.text());
+      if (charged.length !== 1 || listRates.length > 1) {
+        throw new Error(`Canada Post cell for "${label}" not understood: ${cell.text().trim()}`);
+      }
+      out[label] = { rate: charged[0], listRate: listRates.length ? listRates[0] : null };
+    });
+    return out;
   }
-  const domestic = rateAfter('Domestic Services');
-  const parcel = rateAfter('USA and International Parcel');
-  const packet = rateAfter('USA and International Packet');
-  if (domestic == null || parcel == null || packet == null) {
+  function pick(rows, label) {
+    const key = Object.keys(rows).find(k => k.toLowerCase().startsWith(label.toLowerCase()));
+    return key ? rows[key] : null;
+  }
+
+  const current = readWeek(weeks[idx].table);
+  const prior = weeks[idx + 1] ? readWeek(weeks[idx + 1].table) : {};
+  const domestic = pick(current, 'Domestic Services');
+  const parcel = pick(current, 'USA and International Parcel');
+  const packet = pick(current, 'USA and International Packet');
+  if (!domestic || !parcel || !packet) {
     throw new Error('Canada Post rates not fully parsed');
   }
-  return { domestic, parcel, packet };
+  return {
+    domestic, parcel, packet,
+    weekStart: weeks[idx].start,
+    priorWeek: {
+      domestic: pick(prior, 'Domestic Services'),
+      parcel: pick(prior, 'USA and International Parcel'),
+      packet: pick(prior, 'USA and International Packet')
+    }
+  };
 }
 
 // FedEx Rating API. Authenticated against a clean tracker-only account with no
@@ -686,20 +732,36 @@ async function main() {
     });
   }
 
-  // Canada Post: direct static-page values.
+  // Canada Post: direct static-page values. current is the rate charged;
+  // listRate is the struck-through list rate during temporary relief, else null.
+  // Rows written before listRate existed may hold a list rate as current, so
+  // for those the prior week comes from the page itself rather than the file.
+  const sourcePreviousKeys = new Set();
   {
     const name = 'Canada Post';
     const p = prevCarrier(prev, name);
     if (canadaPost.ok) {
-      const pv = (label) => { const s = p && (p.services || []).find(x => x.service === label); return s ? s.current : null; };
+      const v = canadaPost.value;
+      const row = (service, now, before) => {
+        const old = p && (p.services || []).find(x => x.service === service);
+        let previous = old ? old.current : now.rate;
+        if (old && !('listRate' in old) && before) {
+          previous = before.rate;
+          sourcePreviousKeys.add(`${name}|${service}`);
+        }
+        return { service, current: now.rate, previous, listRate: now.listRate };
+      };
       carriers.push({
         name, url: SOURCES.canadaPostPage, cadence: 'weekly', status: 'ok', lastVerified: todayISO(),
         services: [
-          { service: 'Domestic Services', current: canadaPost.value.domestic, previous: pv('Domestic Services') ?? canadaPost.value.domestic },
-          { service: 'USA and International Parcel Services', current: canadaPost.value.parcel, previous: pv('USA and International Parcel Services') ?? canadaPost.value.parcel },
-          { service: 'USA and International Packet Services', current: canadaPost.value.packet, previous: pv('USA and International Packet Services') ?? canadaPost.value.packet }
+          row('Domestic Services', v.domestic, v.priorWeek.domestic),
+          row('USA and International Parcel Services', v.parcel, v.priorWeek.parcel),
+          row('USA and International Packet Services', v.packet, v.priorWeek.packet)
         ]
       });
+      for (const [k, r] of Object.entries({ domestic: v.domestic, parcel: v.parcel, packet: v.packet })) {
+        if (r.listRate != null) console.log(`[canada-post] ${k}: charging ${r.rate}% (temporary relief; list rate ${r.listRate}%)`);
+      }
     } else if (p) {
       carriers.push({ ...p, status: 'stale' });
     }
@@ -861,6 +923,7 @@ async function main() {
     const pc = prevCarrier(prev, c.name);
     for (const svc of c.services) {
       if (overriddenKeys.has(`${c.name}|${svc.service}`)) continue; // override owns previous
+      if (sourcePreviousKeys.has(`${c.name}|${svc.service}`)) continue; // page supplied it
       const ps = pc && (pc.services || []).find(s => s.service === svc.service);
       if (!ps || ps.current == null) continue; // no prior data: leave as already set
       if (svc.current !== ps.current) svc.previous = ps.current;

@@ -147,6 +147,16 @@
   /* Compact change indicator that rides under the rate on small screens, so the
      separate Change column can be dropped rather than clipped. Hidden on desktop. */
   #pnp-fuel-tracker .ch-inline { display: none; }
+  /* List rate shown beside a temporarily reduced rate (Canada Post relief). */
+  #pnp-fuel-tracker .pnp-list-rate {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--pnp-muted);
+    white-space: nowrap;
+  }
+  #pnp-fuel-tracker .pnp-list-rate s { text-decoration: line-through; }
   #pnp-fuel-tracker table {
     width: 100%;
     border-collapse: collapse;
@@ -619,13 +629,17 @@
 
         const curr = (typeof svc.current === 'number') ? svc.current.toFixed(2) + '%' : 'pending';
         const prevCell = (typeof svc.previous === 'number') ? svc.previous.toFixed(2) + '%' : '';
+        // A carrier charging a temporary rate below its list rate: show what is
+        // charged, with the struck-through list rate beside it.
+        const listNote = (typeof svc.listRate === 'number' && typeof svc.current === 'number')
+          ? `<span class="pnp-list-rate" title="Temporary reduced rate; the carrier's list rate is ${svc.listRate.toFixed(2)}%">Temporary rate · list <s>${svc.listRate.toFixed(2)}%</s></span>` : '';
         const change = (typeof svc.current === 'number' && typeof svc.previous === 'number')
           ? renderChange(svc.current, svc.previous) : '';
         const changeCompact = (typeof svc.current === 'number' && typeof svc.previous === 'number')
           ? renderChangeCompact(svc.current, svc.previous) : '';
         cells += `
           <td class="service">${svc.service}</td>
-          <td class="num">${curr}<span class="ch-inline">${changeCompact}</span></td>
+          <td class="num">${curr}${listNote}<span class="ch-inline">${changeCompact}</span></td>
           <td class="num hide-mobile">${prevCell}</td>
           <td class="change">${change}</td>
         `;
