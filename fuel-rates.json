@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-26T17:49:31.362Z",
-  "nextUpdate": "Checked daily; retried hourly on Mondays",
+  "generatedAt": "2026-10-26T19:20:12.842Z",
+  "nextUpdate": "Checked Mondays",
   "inputs": {
     "nrcanDieselCAD": 2.66,
     "nrcanLagApplied": false,
@@ -14,10 +14,11 @@
   },
   "backupCheck": {
     "date": "2026-10-26",
-    "compared": 2,
+    "compared": 5,
     "mismatches": [],
     "withinTolerance": [],
     "skipped": [
+      "UPS Canada|Standard Service within Canada",
       "FedEx Express|Intra-CAN",
       "FedEx Ground and pickup services|Intra-CAN and pickup services"
     ]
@@ -126,7 +127,6 @@
         }
       ],
       "staleWeeks": 0,
-      "sourceError": "Unterminated fractional number in JSON at position 2 (line 1 column 3)",
       "staleSince": null
     },
     {
@@ -174,7 +174,7 @@
     {
       "name": "Purolator",
       "url": "https://www.purolator.com/en/courier-fuel-surcharges",
-      "cadence": "weekly",
+      "cadence": "monthly",
       "status": "ok",
       "lastVerified": "2026-10-26",
       "services": [
@@ -197,7 +197,9 @@
         {
           "service": "Domestic Canada",
           "current": 52.05,
-          "previous": 50.55
+          "previous": 50.55,
+          "effectiveDate": "2026-10-24",
+          "effectiveTo": "2026-10-30"
         }
       ],
       "staleWeeks": 0,
@@ -213,12 +215,18 @@
         {
           "service": "Domestic Express and Ground Service",
           "current": 52.05,
-          "previous": 50.55
+          "previous": 50.55,
+          "effectiveDate": "2026-10-24",
+          "effectiveTo": "2026-10-30",
+          "source": "https://www.loomisexpress.com/loomship/Services/FuelSurcharges"
         },
         {
           "service": "Worldwide Service",
           "current": 25.75,
-          "previous": 23.75
+          "previous": 25.75,
+          "effectiveDate": "2026-10-24",
+          "effectiveTo": "2026-10-30",
+          "source": "https://www.loomisexpress.com/loomship/Services/FuelSurcharges"
         }
       ],
       "staleWeeks": 0,
@@ -236,21 +244,24 @@
           "current": 40.3,
           "previous": 39.9,
           "listRate": 47.5,
-          "effectiveDate": "2026-10-26"
+          "effectiveDate": "2026-10-26",
+          "effectiveTo": "2026-11-01"
         },
         {
           "service": "USA and International Parcel Services",
           "current": 27,
           "previous": 26.75,
           "listRate": null,
-          "effectiveDate": "2026-10-26"
+          "effectiveDate": "2026-10-26",
+          "effectiveTo": "2026-11-01"
         },
         {
           "service": "USA and International Packet Services",
           "current": 25,
           "previous": 24.75,
           "listRate": null,
-          "effectiveDate": "2026-10-26"
+          "effectiveDate": "2026-10-26",
+          "effectiveTo": "2026-11-01"
         }
       ],
       "staleWeeks": 0,
