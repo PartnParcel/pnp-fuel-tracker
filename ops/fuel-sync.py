@@ -187,7 +187,7 @@ def main():
         sys.exit('WordPress readback differs; backup: %s' % path)
     subprocess.run(["sudo", "-u", "partnparcel", "wp", "cache", "flush"],
                    cwd=DOCROOT, capture_output=True, text=True, timeout=60)
-    wp('eval', 'do_action("litespeed_purge_post", 1710);')
+    wp('eval', 'delete_post_meta(1710, "_elementor_element_cache"); do_action("litespeed_purge_post", 1710);')
     print("fuel-sync: updated from %s (%d rows)"
           % (data.get("generatedAt", "?"), body.count("<tr")))
 
