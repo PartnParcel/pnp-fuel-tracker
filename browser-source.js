@@ -11,11 +11,13 @@ async function renderedRead(url,parse,today){
  try{
   let lines;while(Date.now()<deadline){if(launchError)throw launchError;try{lines=(await fs.readFile(path.join(profile,'DevToolsActivePort'),'utf8')).trim().split('\n');break;}catch{await sleep(100);}}
   if(!lines)throw Error(last);
-  ws=new WebSocket(`ws://127.0.0.1:${lines[0]}${lines[1]}`);await Promise.race([new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',e=>reject(Error('WebSocket: '+(e.message||e.error?.message||'connection error'))),{once:true});}),sleep(15000).then(()=>{throw Error('Browser connection timeout');})]);
+  const tabs=await (await fetch(`http://127.0.0.1:${lines[0]}/json/list`,{signal:AbortSignal.timeout(5000)})).json();
+  const target=tabs.find(t=>t.type==='page');if(!target)throw Error('Browser page unavailable');
+  ws=new WebSocket(target.webSocketDebuggerUrl);await Promise.race([new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',e=>reject(Error('WebSocket: '+(e.message||e.error?.message||'connection error'))),{once:true});}),sleep(15000).then(()=>{throw Error('Browser connection timeout');})]);
   let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data),p=pending.get(m.id);if(p){pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);}};
   const call=(method,params={},sessionId)=>new Promise((resolve,reject)=>{const key=++id;const timer=setTimeout(()=>{pending.delete(key);reject(Error('Browser command timeout'));},5000);pending.set(key,{resolve,reject,timer});ws.send(JSON.stringify({id:key,method,params,sessionId}));});
-  const {targetId}=await call('Target.createTarget',{url});const {sessionId}=await call('Target.attachToTarget',{targetId,flatten:true});
-  while(Date.now()<deadline){const result=await call('Runtime.evaluate',{expression:'document.documentElement.outerHTML',returnByValue:true},sessionId);try{return parse(result.result.value,today);}catch(e){last=e.message;}await sleep(500);}
+  await call('Page.enable');await call('Page.navigate',{url});
+  while(Date.now()<deadline){const result=await call('Runtime.evaluate',{expression:'document.documentElement.outerHTML',returnByValue:true});try{return parse(result.result.value,today);}catch(e){last=e.message;}await sleep(500);}
   throw Error('Rendered page did not validate: '+last);
  }finally{
   ws?.close();if(child.pid){try{process.kill(-child.pid,'SIGTERM');}catch{}await sleep(200);try{process.kill(-child.pid,'SIGKILL');}catch{}}
