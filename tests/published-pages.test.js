@@ -18,3 +18,12 @@ test('Rendered UPS history parses the same current and previous rows as official
  const json=require('./fixtures/ups-ca-2026-10-26.json');const rows=json.FuelSurchargeResponse.SurchargeHistory_en.RevenueSurchargeHistory;const html='<table><tr><th>Standard Service to the U.S.:</th><th>Domestic Express and Expedited:</th></tr>'+rows.map(r=>'<tr>'+[1,2,3,4,5].map(i=>'<td>'+r['Field'+i]+'</td>').join('')+'</tr>').join('')+'</table>';
  assert.deepEqual(parseUPSPage(html,'2026-10-26').services.map(s=>s.current),[23.5,53,42.25,38.75]);
 });
+
+test('API fallback previous preserves stale and same-period values; monthly boundary is first Monday',()=>{
+ const {previousForPeriod}=require('../published-pages');
+ const p={lastVerified:'2026-10-26',services:[{service:'test',current:50,previous:45.5}]};const svc={service:'test',current:55,previous:45.5};
+ assert.equal(previousForPeriod({status:'stale',cadence:'weekly'},p,svc,'2026-11-02'),45.5);
+ assert.equal(previousForPeriod({status:'ok',cadence:'weekly'},p,svc,'2026-11-02'),50);
+ assert.equal(previousForPeriod({status:'ok',cadence:'monthly'},p,svc,'2026-11-01'),45.5);
+ assert.equal(previousForPeriod({status:'ok',cadence:'monthly'},p,svc,'2026-11-02'),50);
+});

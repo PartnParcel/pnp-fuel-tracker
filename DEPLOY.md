@@ -2,7 +2,7 @@
 
 ## What changes
 
-Merge PR1 after regression CI and review. Merged source changes automatically start a refresh using existing GitHub API secrets. The workflow requests `contents: write` for the existing data commit. It never sends email directly, changes credentials, or authorizes an agent to deploy repairs.
+Merge the reviewed correction PR after regression CI and review. Merged source changes automatically start a refresh using existing GitHub API secrets. The workflow requests `contents: write` for the existing data commit. It never sends email directly, changes credentials, or authorizes an agent to deploy repairs.
 
 The business-box changes below are separate from merging. Do not call a prepared script installed or an unrun workflow healthy.
 
@@ -20,4 +20,4 @@ Disable the new cron first if its write path is faulty. Restore the saved script
 
 ## Known limits
 
-GitHub scheduled jobs can start late. The Monday-only cadence is intentional; seven-day age and current-week checks prevent indefinite green status. The existing daily server-copy sync can pick up a delayed Monday publication on Tuesday. The server cron synchronizes the published feed, not the carrier API credentials. A complete GitHub outage needs the normal infrastructure response; this change does not introduce a second credential store or scheduler account.
+GitHub scheduled jobs can start late. The Monday-only cadence is intentional; seven-day age and current-week checks prevent indefinite green status. The Monday server-copy job waits up to 20 hours for a current-week feed, checking the published file every five minutes without refetching carriers. A publication beyond that window needs operational recovery. The server cron synchronizes the published feed, not the carrier API credentials. A complete GitHub outage needs the normal infrastructure response; this change does not introduce a second credential store or scheduler account.

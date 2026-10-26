@@ -463,7 +463,7 @@
     week.setUTCDate(week.getUTCDate() - (week.getUTCDay() + 6) % 7);
     const weekStart = week.toISOString().slice(0,10);
     fuelData = { ...fuelData, carriers: fuelData.carriers.map(c => ({ ...c,
-      status: staleFeed || !c.lastVerified || c.lastVerified < weekStart ? 'stale' : c.status
+      status: staleFeed || !c.lastVerified || c.lastVerified < weekStart || c.services.some(s => s.effectiveTo && s.effectiveTo < today) ? 'stale' : c.status
     })) };
     const tbody = root.querySelector('#pnp-fuel-tbody');
     const rows = [];

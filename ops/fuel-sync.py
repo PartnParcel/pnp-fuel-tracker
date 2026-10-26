@@ -58,7 +58,7 @@ def render(data):
         now = datetime.datetime.now(datetime.timezone.utc)
         today = now.astimezone(ZoneInfo('America/Toronto')).date()
         week_start = (today - datetime.timedelta(days=today.weekday())).isoformat()
-        if not car.get('lastVerified') or car['lastVerified'] < week_start:
+        if not car.get('lastVerified') or car['lastVerified'] < week_start or any(s.get('effectiveTo', '9999-12-31') < today.isoformat() for s in svcs):
             status = 'stale'
         try:
             stamp = datetime.datetime.fromisoformat(data['generatedAt'].replace('Z', '+00:00'))

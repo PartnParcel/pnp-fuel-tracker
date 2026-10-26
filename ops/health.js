@@ -9,6 +9,7 @@ function problems(data, now=new Date()) {
   for(const name of new Set(names)) {
     const c=data.carriers?.find(c=>c.name===name);
     if(!c || !c.services?.length){out.push(`${name}: missing carrier rows.`);continue;}
+    if(c.services.some(s=>s.effectiveTo&&s.effectiveTo<dateISO(now)))out.push(`${name}: source effective period expired.`);
     if(c.status!=='ok')out.push(`${name}: using last-known data; source verification failed.`);
     if(!c.lastVerified || c.lastVerified<monday(dateISO(now)))out.push(`${name}: not verified this week.`);
     if(c.services.some(s=>!Number.isFinite(s.current)||s.current<0||s.current>100))out.push(`${name}: invalid or missing rate.`);

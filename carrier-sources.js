@@ -33,7 +33,7 @@ function parseUPS(data, today = dateISO()) {
   }
   const weekStart = monday(today), current = byDate.get(weekStart), prior = byDate.get(offset(weekStart,-7));
   if (!current || !prior) throw new Error(`UPS current/prior week missing for ${weekStart}`);
-  return { weekStart, services: Object.entries(current).map(([service, value]) => ({service, current:value, previous:prior[service], effectiveDate:weekStart, source:UPS_URL})) };
+  return { weekStart, services: Object.entries(current).map(([service, value]) => ({service, current:value, previous:prior[service], effectiveDate:weekStart, effectiveTo:offset(weekStart,6), source:UPS_URL})) };
 }
 const CP_LABELS = ['Domestic Services', 'USA and International Parcel Services', 'USA and International Packet Services'];
 function parseCanadaPost(html, today = dateISO()) {
@@ -66,7 +66,7 @@ function parseCanadaPost(html, today = dateISO()) {
     return rows;
   }
   const current = read(weeks.get(weekStart)), prior = read(weeks.get(offset(weekStart,-7)));
-  return { weekStart, services:CP_LABELS.map(service=>({service,current:current.get(service).rate,previous:prior.get(service).rate,listRate:current.get(service).listRate,effectiveDate:weekStart})) };
+  return { weekStart, services:CP_LABELS.map(service=>({service,current:current.get(service).rate,previous:prior.get(service).rate,listRate:current.get(service).listRate,effectiveDate:weekStart,effectiveTo:offset(weekStart,6)})) };
 }
 function applyPublished(carriers, prev, name, result, url, today, sourcePreviousKeys) {
   const old = prev.carriers?.find(c=>c.name===name);

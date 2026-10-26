@@ -497,36 +497,7 @@ async function fetchPurolatorApi() {
 // we take the tariff (first %, the standard published rate) for the row whose
 // effective date is the most recent on or before today. Forward-dated rows
 // (next week's rate) are correctly ignored until they take effect.
-async function fetchLoomisWorldwide() {
-  const res = await fetch(SOURCES.loomisPage, { headers: BROWSER_HEADERS });
-  if (!res.ok) throw new Error(`Loomis page responded ${res.status}`);
-  const html = await res.text();
-  const h = html.search(/Worldwide Service/i);
-  if (h < 0) throw new Error('Loomis Worldwide section not found');
-  // Bound to the Worldwide table region so Domestic-table rows cannot leak in.
-  // Markup between a date cell and its rate cell is unpredictable, so pair by
-  // position: each row's tariff is the first percentage appearing after its
-  // effective date. The tariff column is the first %; the volume-discount % is
-  // the second and is ignored.
-  const seg = html.slice(h, h + 3000);
-  // Loomis writes effective dates as MM-DD-YYYY (dashes), unlike Canpar's slashes.
-  const dates = [...seg.matchAll(/(\d{2})-(\d{2})-(\d{4})/g)].map(m => ({ i: m.index, date: `${m[3]}-${m[1]}-${m[2]}` }));
-  const pcts = [...seg.matchAll(/(\d{1,2}\.\d{2})\s*%/g)].map(m => ({ i: m.index, v: parseFloat(m[1]) }));
-  const rows = dates.map(d => {
-    const p = pcts.find(x => x.i > d.i);
-    return p ? { date: d.date, tariff: p.v } : null;
-  }).filter(Boolean);
-  if (!rows.length) throw new Error('Loomis Worldwide rows not parsed');
-  const today = todayISO();
-  const eligible = rows.filter(r => r.date <= today).sort((a, b) => (a.date < b.date ? 1 : -1));
-  const pick = eligible[0];
-  if (!pick || Date.parse(today) - Date.parse(pick.date) >= 7 * 86400000) throw new Error('Loomis current effective week missing');
-  if (!(pick.tariff > 0 && pick.tariff < 100)) throw new Error(`Loomis Worldwide out of range: ${pick.tariff}`);
-  return { rate: pick.tariff, effectiveDate: pick.date };
-}
-
-// ----------------------------------------------------------------------------
-// ORCHESTRATOR. Fetch everything, fall back per-source, assemble the JSON.
+// // ORCHESTRATOR. Fetch everything, fall back per-source, assemble the JSON.
 // ----------------------------------------------------------------------------
 
 function loadPrevious() {
@@ -645,7 +616,7 @@ async function main() {
       carriers.push({
         name, url: 'https://www.canpar.com/en/shipping/fuel_surcharge.htm',
         cadence: 'weekly', status: 'ok', lastVerified: todayISO(),
-        services: [{ service: 'Domestic Canada', current: canpar.value.rate, previous: prevRate }]
+        services: [{ service: 'Domestic Canada', current: canpar.value.rate, previous: prevRate, effectiveDate:canpar.value.effectiveFrom, effectiveTo:canpar.value.effectiveTo }]
       });
     } else if (p) {
       carriers.push({ ...p, status: 'stale' });
@@ -819,8 +790,7 @@ async function main() {
       if (sourcePreviousKeys.has(`${c.name}|${svc.service}`)) continue; // page supplied it
       const ps = pc && (pc.services || []).find(s => s.service === svc.service);
       if (!ps || ps.current == null) continue; // no prior data: leave as already set
-      const samePeriod = c.cadence==='monthly' ? pc.lastVerified?.slice(0,7)===todayISO().slice(0,7) : pc.lastVerified && require('./carrier-sources').monday(pc.lastVerified)===require('./carrier-sources').monday(todayISO());
-      svc.previous = samePeriod ? (ps.previous ?? null) : ps.current;
+      svc.previous = require('./published-pages').previousForPeriod(c,pc,svc,todayISO());
     }
   }
 
