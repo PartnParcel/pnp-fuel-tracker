@@ -88,12 +88,14 @@ function staleWeeks(carrier, previous, today) {
   return {staleSince:since,staleWeeks:Math.floor((Date.parse(monday(today))-Date.parse(monday(since)))/(7*DAY))+1};
 }
 // UPS Rating API (list rates, clean tracker account). UPS charges fuel on the
-// base rate plus fuel-applicable surcharges ("Services Affected" on its fuel
-// page lists peak surcharges), so the posted percent is fuel / (base + those).
-// 434 = Surge Fee (peak), added to every quote from Oct 26 2026: verified that
-// fuel / (base + 434) reproduces all four posted rows that week. 573 =
-// International Processing Fee, which fuel does not apply to. Any other code
-// is unknown: refuse rather than guess, so the row goes stale and alerts.
+// transportation charge, which is the base rate plus fuel-applicable surcharges
+// (its fuel page lists peak surcharges) and any service premium not itemized
+// (Express Plus). So the posted percent is
+//   fuel / (TransportationCharges - fuel - charges fuel does not apply to).
+// Verified against all four posted rows for the week of Oct 26 2026, when every
+// quote first carried 434 = Surge Fee (peak). 573 = International Processing
+// Fee, which fuel does not apply to. Any other code is unknown: refuse rather
+// than guess, so the row goes stale and the alert opens.
 const UPS_FUEL_CODE = '375';
 const UPS_FUEL_BASE_CODES = new Set(['434']);
 const UPS_NON_FUEL_CODES = new Set(['573']);
@@ -110,14 +112,15 @@ function upsFuelPercents(ratedShipments) {
   const money = v => parseFloat(v?.MonetaryValue ?? 'NaN');
   const out = {};
   for (const s of arr(ratedShipments)) {
-    const base = money(s.BaseServiceCharge);
-    let fuel = null, fuelBase = base;
+    const transport = money(s.TransportationCharges);
+    let fuel = null, nonFuel = 0;
     for (const c of arr(s.ItemizedCharges)) {
       if (c.Code === UPS_FUEL_CODE) fuel = money(c);
-      else if (UPS_FUEL_BASE_CODES.has(c.Code)) fuelBase += money(c);
-      else if (!UPS_NON_FUEL_CODES.has(c.Code)) throw new Error(`UPS quote has an unrecognized charge ${c.Code} ${c.Description || c.SubType || ''}`.trim());
+      else if (UPS_NON_FUEL_CODES.has(c.Code)) nonFuel += money(c);
+      else if (!UPS_FUEL_BASE_CODES.has(c.Code)) throw new Error(`UPS quote has an unrecognized charge ${c.Code} ${c.Description || c.SubType || ''}`.trim());
     }
-    if (fuel == null || !(base > 0) || !Number.isFinite(fuelBase)) continue;
+    const fuelBase = transport - (fuel ?? 0) - nonFuel;
+    if (fuel == null || !(fuelBase > 0)) continue;
     out[s.Service?.Code] = (fuel / fuelBase) * 100;
   }
   return out;

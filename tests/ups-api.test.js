@@ -6,9 +6,10 @@ const quotes = () => ({domestic: upsFuelPercents(fx.domestic), us: upsFuelPercen
 test('Rating API quotes reproduce all four posted UPS rows (week of Oct 26 2026)', () => {
   assert.deepEqual(upsRatesFromQuotes(quotes()), {standardCanada: 53, domesticExpress: 38.75, standardUS: 23.5, international: 42.25});
 });
-test('fuel is charged on base plus the surge fee, not on the processing fee', () => {
-  const us = upsFuelPercents(fx.us);
+test('fuel is charged on transport incl. surge fee and Express Plus premium, not the processing fee', () => {
+  const us = upsFuelPercents(fx.us), intl = upsFuelPercents(fx.intl);
   assert.ok(Math.abs(us['07'] - 42.25) < 0.05);
+  assert.ok(Math.abs(intl['54'] - 42.25) < 0.05); // Express Plus premium is not itemized
   // Dividing by base alone (the old method) is about a point too high.
   assert.ok(28.24 / 66.51 * 100 - 42.25 > 0.2);
 });
