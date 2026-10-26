@@ -29,6 +29,8 @@ const cheerio = require('cheerio');                 // reads HTML pages
 const { XMLParser } = require('fast-xml-parser');   // reads RSS feeds
 const { computeRates } = require('./fuel-engine.js');
 const { UPS_URL, dateISO, parseUPS, parseCanadaPost, applyPublished, staleWeeks } = require('./carrier-sources.js');
+const {URLS,parseUPSPage,parseFedEx,parsePurolator,parseLoomis}=require('./published-pages');
+const {readPage}=require('./browser-source');
 // Every source has a deadline; one hung source must not block the refresh.
 const fetch = (url, opts = {}) => globalThis.fetch(url, { ...opts, signal: opts.signal || AbortSignal.timeout(25000) });
 
@@ -554,10 +556,12 @@ async function main() {
   const canpar = await safe('Canpar endpoint', fetchCanpar);
   const canadaPost = await safe('Canada Post page', fetchCanadaPost);
   const upsPublished = await safe('UPS published history', async () => {
-    const res = await fetchRetry(UPS_URL, { headers: BROWSER_HEADERS });
-    return parseUPS(await res.json(), todayISO());
+    try {const res=await fetchRetry(UPS_URL,{headers:BROWSER_HEADERS});return parseUPS(await res.json(),todayISO());}
+    catch {return readPage(URLS.UPS,parseUPSPage,todayISO());}
   });
-  const loomisWW = await safe('Loomis Worldwide page', fetchLoomisWorldwide);
+  const loomisPage = await safe('Loomis published page',()=>readPage(URLS.Loomis,parseLoomis,todayISO()));
+  const fedexPage = await safe('FedEx published page',()=>readPage(URLS.FedEx,parseFedEx,todayISO()));
+  const puroPage = await safe('Purolator published page',()=>readPage(URLS.Purolator,parsePurolator,todayISO()));
   const fedexApi = await safe('FedEx Rating API', fetchFedexApi);
   const upsApi = await safe('UPS Rating API', fetchUpsApi);
   const puroApi = await safe('Purolator E-Ship API', fetchPurolatorApi);
@@ -648,41 +652,8 @@ async function main() {
     }
   }
 
-  // Loomis: Domestic = Canpar endpoint value (shared band table). Worldwide = derived jet.
-  {
-    const name = 'Loomis Express';
-    const p = prevCarrier(prev, name);
-    const d = derived.find(c => c.name === name);
-    const worldwide = d ? d.services.find(s => /Worldwide/i.test(s.service)) : null;
-    const pWorld = p ? (p.services || []).find(s => /Worldwide/i.test(s.service)) : null;
-    const pDom = p ? (p.services || []).find(s => /Domestic/i.test(s.service)) : null;
-    const services = [];
-    // Domestic from Canpar endpoint
-    if (canpar.ok) {
-      services.push({ service: 'Domestic Express and Ground Service', current: canpar.value.rate, previous: pDom ? pDom.current : canpar.value.rate });
-    } else if (pDom) {
-      services.push({ ...pDom });
-    }
-    // Worldwide from the Loomis published page (authoritative tariff rate).
-    // Fall back to last-known, then to the jet derivation only as a last resort.
-    let wwFresh = false;
-    if (loomisWW.ok) {
-      services.push({ service: 'Worldwide Service', current: loomisWW.value.rate, previous: pWorld ? pWorld.current : loomisWW.value.rate });
-      wwFresh = true;
-    } else if (pWorld) {
-      services.push({ ...pWorld });
-    } else if (worldwide && worldwide.current != null) {
-      services.push({ service: 'Worldwide Service', current: worldwide.current, previous: worldwide.current });
-    }
-    const fresh = canpar.ok && wwFresh;
-    carriers.push({
-      name, url: 'https://www.loomisexpress.com/loomship/Services/FuelSurcharges',
-      cadence: 'weekly', status: fresh ? 'ok' : 'stale',
-      lastVerified: fresh ? todayISO() : (p ? p.lastVerified : null), services
-    });
-  }
-
   const sourcePreviousKeys = new Set();
+  applyPublished(carriers,prev,'Loomis Express',loomisPage,URLS.Loomis,todayISO(),sourcePreviousKeys);
   applyPublished(carriers, prev, 'Canada Post', canadaPost, SOURCES.canadaPostPage, todayISO(), sourcePreviousKeys);
 
   // Snapshot every derived value before the carrier APIs overwrite them, so we
@@ -745,6 +716,13 @@ async function main() {
     const i = carriers.findIndex(c => c.name === name), old = prevCarrier(prev, name);
     if (i >= 0) carriers[i] = { ...(old || carriers[i]), status: 'stale', lastVerified: old?.lastVerified || null };
   }
+
+  // Published service-period tables own both current and previous; APIs are
+  // fallback sources when a carrier blocks both direct and rendered page reads.
+  if(fedexPage.ok)for(const name of ['FedEx Express','FedEx Ground and pickup services'])
+    applyPublished(carriers,prev,name,{ok:true,value:fedexPage.value[name]},URLS.FedEx,todayISO(),sourcePreviousKeys);
+  if(puroPage.ok)applyPublished(carriers,prev,'Purolator',puroPage,URLS.Purolator,todayISO(),sourcePreviousKeys);
+  carriers.find(c=>c.name==='Purolator').cadence='monthly';
 
   // 3e. CONSISTENCY CHECK: the backup derivation, computed with properly
   //     lagged inputs, must agree with the carrier APIs. A mismatch means a
@@ -815,6 +793,7 @@ async function main() {
       const carrier = carriers.find(c => c.name === o.carrier);
       const svc = carrier && carrier.services.find(s => s.service === o.service);
       if (!svc) { console.error(`[override] no match for ${o.carrier} / ${o.service}`); continue; }
+      if(sourcePreviousKeys.has(`${o.carrier}|${o.service}`)) continue; // fresh page outranks temporary overrides
       svc.current = o.rate;
       svc.previous = ('previous' in o) ? o.previous : null;
       carrier.status = 'ok';
@@ -840,8 +819,8 @@ async function main() {
       if (sourcePreviousKeys.has(`${c.name}|${svc.service}`)) continue; // page supplied it
       const ps = pc && (pc.services || []).find(s => s.service === svc.service);
       if (!ps || ps.current == null) continue; // no prior data: leave as already set
-      if (svc.current !== ps.current) svc.previous = ps.current;
-      else svc.previous = (ps.previous != null ? ps.previous : ps.current);
+      const samePeriod = c.cadence==='monthly' ? pc.lastVerified?.slice(0,7)===todayISO().slice(0,7) : pc.lastVerified && require('./carrier-sources').monday(pc.lastVerified)===require('./carrier-sources').monday(todayISO());
+      svc.previous = samePeriod ? (ps.previous ?? null) : ps.current;
     }
   }
 

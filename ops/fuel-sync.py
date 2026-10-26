@@ -20,6 +20,7 @@ import datetime
 import pathlib
 import fcntl
 import hashlib
+import time
 from zoneinfo import ZoneInfo
 
 FEED = "https://raw.githubusercontent.com/PartnParcel/pnp-fuel-tracker/main/fuel-rates.json"
@@ -114,6 +115,7 @@ def mark_stale(body):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--wait-current-week', action='store_true', help="Monday job waits for this week's published feed, up to 20 hours")
     parser.add_argument('--apply', action='store_true', help='Write the reviewed change; otherwise dry-run')
     parser.add_argument('--install-widget', type=pathlib.Path, help='One-time upgrade of the exact fuel widget only')
     parser.add_argument('--data', type=pathlib.Path, help='Local reviewed feed for dry-run only')
@@ -128,8 +130,22 @@ def main():
         if args.data:
             data = json.loads(args.data.read_text())
         else:
-            with urllib.request.urlopen(FEED, timeout=30) as r:
-                data = json.load(r)
+            deadline = time.monotonic() + (20 * 3600 if args.wait_current_week else 0)
+            while True:
+                try:
+                    with urllib.request.urlopen(FEED, timeout=30) as r:
+                        data = json.load(r)
+                    today = datetime.datetime.now(ZoneInfo('America/Toronto')).date()
+                    week = (today - datetime.timedelta(days=today.weekday())).isoformat()
+                    if not args.wait_current_week or data.get('generatedAt', '')[:10] >= week:
+                        break
+                except (OSError, ValueError):
+                    if time.monotonic() >= deadline:
+                        raise
+                if time.monotonic() >= deadline:
+                    raise ValueError('No current-week publication within Monday wait window')
+                time.sleep(300)
+
         if not data.get('carriers'):
             raise ValueError('feed has no carriers')
         body = render(data)

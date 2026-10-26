@@ -18,3 +18,5 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Verify live carrier page readers and browser fallback
+        run: node ops/source-smoke.js
