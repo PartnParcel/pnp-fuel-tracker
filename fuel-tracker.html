@@ -363,11 +363,11 @@
   <div class="pnp-meta">
     <div class="pnp-meta-item">
       <span class="pnp-meta-label">Next update</span>
-      <span class="pnp-meta-value"><span class="pnp-live-dot"></span><span id="pnp-next-update">Checked daily</span></span>
+      <span class="pnp-meta-value"><span class="pnp-live-dot"></span><span id="pnp-next-update">Checked Mondays</span></span>
     </div>
     <div class="pnp-meta-item">
       <span class="pnp-meta-label">Update cadence</span>
-      <span class="pnp-meta-value">Daily checks; hourly Monday retries</span>
+      <span class="pnp-meta-value">Weekly on Mondays</span>
     </div>
   </div>
 
@@ -457,7 +457,7 @@
   function renderTable(fuelData) {
     // A stopped scheduler must not leave an old green "verified" label forever.
     const age = (Date.now() - Date.parse(fuelData.generatedAt)) / 3600000;
-    const staleFeed = !Number.isFinite(age) || age > 36 || age < -0.1;
+    const staleFeed = !Number.isFinite(age) || age > 168 || age < -0.1;
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
     const week = new Date(today + 'T12:00:00Z');
     week.setUTCDate(week.getUTCDate() - (week.getUTCDay() + 6) % 7);

@@ -62,7 +62,7 @@ def render(data):
         try:
             stamp = datetime.datetime.fromisoformat(data['generatedAt'].replace('Z', '+00:00'))
             age = (now - stamp).total_seconds() / 3600
-            if not 0 <= age <= 36:
+            if not 0 <= age <= 168:
                 status = 'stale'
         except (KeyError, ValueError, TypeError):
             status = 'stale'
