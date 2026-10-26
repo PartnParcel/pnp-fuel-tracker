@@ -31,4 +31,12 @@ class RenderTests(unittest.TestCase):
         self.assertIn('pnp-verified stale',rendered)
     def test_source_text_escaped(self):
         d=data();d['carriers'][0]['services'][0]['service']='<script>bad</script>';self.assertIn('&lt;script&gt;',sync.render(d))
+    def test_cached_older_feed_cannot_replace_newer_rows(self):
+        base='<tbody id="pnp-fuel-tbody">old</tbody>'
+        newer=sync.replace_rows(base,base,'new','2026-10-26T19:20:12.842Z')
+        self.assertEqual(sync.replace_rows(newer,newer,'cached','2026-10-26T17:49:31.362Z'),newer)
+        self.assertEqual(sync.replace_rows(newer,newer,'new','2026-10-26T19:20:12.842Z'),newer)
+        advanced=sync.replace_rows(newer,newer,'next','2026-11-02T12:00:00Z')
+        self.assertIn('>next</tbody>',advanced)
+        self.assertEqual(advanced.count('pnp-fuel-generated-at:'),1)
 if __name__=='__main__':unittest.main()

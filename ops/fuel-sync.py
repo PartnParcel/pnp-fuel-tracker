@@ -108,6 +108,22 @@ def render(data):
     return "".join(rows)
 
 
+STAMP = re.compile(r'<!-- pnp-fuel-generated-at: ([^ ]+) -->')
+
+def replace_rows(html, source, body, generated_at=None):
+    """Never replace a newer published snapshot with an older cached response."""
+    old = STAMP.search(html)
+    if generated_at:
+        incoming = datetime.datetime.fromisoformat(generated_at.replace('Z', '+00:00'))
+        if old and incoming < datetime.datetime.fromisoformat(old.group(1).replace('Z', '+00:00')):
+            return html
+    result = TBODY.sub(lambda m: m.group(1) + body + m.group(3), source)
+    if generated_at:
+        result = STAMP.sub('', result)
+        result = result.replace('<tbody id="pnp-fuel-tbody">', '<!-- pnp-fuel-generated-at: %s -->' % esc(generated_at) + '<tbody id="pnp-fuel-tbody">', 1)
+    return result
+
+
 def mark_stale(body):
     """Change verification labels only; preserve all saved rates and markup."""
     body = re.sub(r'class="pnp-verified(?: stale| failed)? ?"',
@@ -135,7 +151,8 @@ def main():
             deadline = time.monotonic() + (20 * 3600 if args.wait_current_week else 0)
             while True:
                 try:
-                    with urllib.request.urlopen(FEED, timeout=30) as r:
+                    request = urllib.request.Request(FEED + '?sync=' + str(int(time.time())), headers={'Cache-Control': 'no-cache'})
+                    with urllib.request.urlopen(request, timeout=30) as r:
                         data = json.load(r)
                     today = datetime.datetime.now(ZoneInfo('America/Toronto')).date()
                     week = (today - datetime.timedelta(days=today.weekday())).isoformat()
@@ -180,7 +197,7 @@ def main():
     source = args.install_widget.read_text() if args.install_widget else html
     if len(TBODY.findall(source)) != 1:
         sys.exit('Expected one fuel tbody in replacement widget')
-    new_html = TBODY.sub(lambda m: m.group(1) + body + m.group(3), source)
+    new_html = replace_rows(html, source, body, data.get("generatedAt"))
     if new_html == html:
         print("fuel-sync: already current (%s)" % data.get("generatedAt", "?"))
         return
