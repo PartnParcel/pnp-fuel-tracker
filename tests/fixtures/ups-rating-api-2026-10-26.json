@@ -1,0 +1,315 @@
+{
+ "_source": "UPS Rating API Shop, list rates, run 40380745663 (2026-10-26); posted that week: Standard CA 53.00, Standard US 23.50, International 42.25, Domestic Express 38.75",
+ "domestic": [
+  {
+   "Service": {
+    "Code": "01"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "29.62"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "11.77"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.75"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "02"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "24.39"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "9.74"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.75"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "11"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "22.56"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "12.35"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.75"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "13"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "26.29"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "10.48"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.75"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "14"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "57.39"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "22.53"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.75"
+    }
+   ]
+  }
+ ],
+ "us": [
+  {
+   "Service": {
+    "Code": "07"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "66.51"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "573",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "3.50"
+    },
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "28.24"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.32"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "08"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "54.61"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "573",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "3.50"
+    },
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "23.21"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.32"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "11"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "18.14"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "4.44"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.75"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "12"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "48.23"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "20.51"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.32"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "54"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "149.13"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "573",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "3.50"
+    },
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "63.14"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.32"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "65"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "63.17"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "573",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "3.50"
+    },
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "26.82"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.32"
+    }
+   ]
+  }
+ ],
+ "intl": [
+  {
+   "Service": {
+    "Code": "07"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "88.03"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "37.33"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.32"
+    }
+   ]
+  },
+  {
+   "Service": {
+    "Code": "08"
+   },
+   "BaseServiceCharge": {
+    "CurrencyCode": "CAD",
+    "MonetaryValue": "78.41"
+   },
+   "ItemizedCharges": [
+    {
+     "Code": "375",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "33.26"
+    },
+    {
+     "Code": "434",
+     "SubType": "Surge_Fee_Commercial",
+     "CurrencyCode": "CAD",
+     "MonetaryValue": "0.32"
+    }
+   ]
+  }
+ ]
+}

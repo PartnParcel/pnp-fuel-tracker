@@ -28,7 +28,7 @@ const xlsx = require('xlsx');                       // reads EIA .xls files
 const cheerio = require('cheerio');                 // reads HTML pages
 const { XMLParser } = require('fast-xml-parser');   // reads RSS feeds
 const { computeRates } = require('./fuel-engine.js');
-const { UPS_URL, dateISO, parseUPS, parseCanadaPost, applyPublished, staleWeeks } = require('./carrier-sources.js');
+const { UPS_URL, UPS_ROW_KEYS, dateISO, parseUPS, parseCanadaPost, applyPublished, staleWeeks, upsFuelPercents, upsRatesFromQuotes } = require('./carrier-sources.js');
 // Every source has a deadline; one hung source must not block the refresh.
 const fetch = (url, opts = {}) => globalThis.fetch(url, { ...opts, signal: opts.signal || AbortSignal.timeout(25000) });
 
@@ -332,12 +332,11 @@ async function fetchFedexApi() {
 
 // UPS Rating API. Authenticated against a clean tracker-only account with no
 // negotiated pricing and no NegotiatedRatesIndicator on the request, so UPS
-// returns published rates. Fuel arrives as itemized charge code 375; the
-// published percent is fuel / BaseServiceCharge, which lands exactly on UPS's
-// posted number for domestic and CA-to-US Standard (validated against the
-// posted page, week of June 8 2026). International is NOT computed this way:
-// UPS applies fuel to a different base on international shipments, so that row
-// stays on the band-table derivation until its posted value is calibrated.
+// returns published rates. Fuel arrives as itemized charge 375 and is charged on
+// the base rate plus fuel-applicable surcharges, so the posted percent is
+// fuel / (base + those surcharges); upsFuelPercents in carrier-sources.js holds
+// the charge codes. Covers all four UPS rows, International included (validated
+// against UPS's posted rates, week of Oct 26 2026). Scheduled and unattended.
 async function fetchUpsApi() {
   const id = process.env.UPS_CLIENT_ID;
   const secret = process.env.UPS_CLIENT_SECRET;
@@ -374,44 +373,16 @@ async function fetchUpsApi() {
     });
     if (!res.ok) throw new Error(`UPS rate call responded ${res.status}`);
     const json = await res.json();
-    const list = json?.RateResponse?.RatedShipment || [];
-    const shipments = Array.isArray(list) ? list : [list];
-    const out = {};
-    for (const s of shipments) {
-      const baseCharge = parseFloat(s.BaseServiceCharge?.MonetaryValue ?? 'NaN');
-      const itemized = s.ItemizedCharges ? (Array.isArray(s.ItemizedCharges) ? s.ItemizedCharges : [s.ItemizedCharges]) : [];
-      const fuelItem = itemized.find(c => c.Code === '375' || /fuel/i.test(c.Description || ''));
-      const fuel = fuelItem ? parseFloat(fuelItem.MonetaryValue) : null;
-      if (fuel != null && baseCharge > 0) out[s.Service?.Code] = (fuel / baseCharge) * 100;
-    }
-    return out;
+    return upsFuelPercents(json?.RateResponse?.RatedShipment);
   }
 
-  // UPS posts rates in 0.25-point steps; penny rounding in a quote puts the
-  // ratio within a few hundredths of the posted number, so snap to the step.
-  const snap = r => Math.round(r * 4) / 4;
-
-  const domestic = await shop({ City: 'Montreal', StateProvinceCode: 'QC', PostalCode: 'H2Y1C6', CountryCode: 'CA' });
-  const us = await shop({ City: 'New York', StateProvinceCode: 'NY', PostalCode: '10001', CountryCode: 'US' });
-
-  // Domestic express family: codes 01 Express, 02 Expedited, 13 Saver, 14 Early.
-  const expressCodes = ['01', '02', '13', '14'].filter(c => domestic[c] != null);
-  const expressRates = expressCodes.map(c => snap(domestic[c]));
-  if (!expressRates.length || domestic['11'] == null || us['11'] == null) {
-    throw new Error('UPS response missing Standard or Express services');
-  }
-  if (!expressRates.every(r => r === expressRates[0])) {
-    throw new Error(`UPS domestic express family disagrees after snapping: ${expressRates.join(', ')}`);
-  }
-  const result = {
-    standardCanada: snap(domestic['11']),
-    domesticExpress: expressRates[0],
-    standardUS: snap(us['11'])
-  };
-  for (const [k, v] of Object.entries(result)) {
-    if (!(v > 0 && v < 100)) throw new Error(`UPS ${k} out of range: ${v}`);
-  }
-  return result;
+  // Fuel % per service off fuel / (base + fuel-applicable surcharges); see
+  // upsRatesFromQuotes for the step and family-agreement checks.
+  return upsRatesFromQuotes({
+    domestic: await shop({ City: 'Montreal', StateProvinceCode: 'QC', PostalCode: 'H2Y1C6', CountryCode: 'CA' }),
+    us: await shop({ City: 'New York', StateProvinceCode: 'NY', PostalCode: '10001', CountryCode: 'US' }),
+    intl: await shop({ City: 'London', PostalCode: 'EC1A1BB', CountryCode: 'GB' })
+  });
 }
 
 // Purolator E-Ship Estimating API. Pre-wired: activates automatically the week
@@ -724,6 +695,25 @@ async function main() {
     'https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges',
     todayISO(), sourcePreviousKeys);
 
+  // UPS's published-history file answers automated requests with a bot check,
+  // so when it can't be read the Rating API carries all four rows. Both failing
+  // leaves the rows stale; an estimate is never published as verified.
+  if (!upsPublished.ok && upsApi.ok) {
+    const i = carriers.findIndex(c => c.name === 'UPS Canada');
+    const old = prevCarrier(prev, 'UPS Canada');
+    carriers[i] = {
+      name: 'UPS Canada',
+      url: 'https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges',
+      cadence: 'weekly', status: 'ok', lastVerified: todayISO(),
+      services: Object.entries(UPS_ROW_KEYS).map(([service, key]) => {
+        const o = old && (old.services || []).find(s => s.service === service);
+        return { service, current: upsApi.value[key], previous: o ? o.current : upsApi.value[key] };
+      })
+    };
+    const v = upsApi.value;
+    console.log(`[ups-api] list rates: Standard CA ${v.standardCanada}%, Standard US ${v.standardUS}%, International ${v.international}%, Domestic Express ${v.domesticExpress}%`);
+  }
+
   // 3d. Purolator exact rate from E-Ship, once credentials exist. While the
   //     verified override below is still active it wins (same number); delete
   //     the override when this goes live.
@@ -773,7 +763,7 @@ async function main() {
   const backupCheck = { date: todayISO(), compared: 0, mismatches: [], withinTolerance: [], skipped: [] };
   for (const [key, { dep, tol }] of Object.entries(ROW_INPUT)) {
     const [name, service] = key.split('|');
-    const apiOk = name === 'UPS Canada' ? upsPublished.ok : fedexApi.ok;
+    const apiOk = name === 'UPS Canada' ? (upsPublished.ok || upsApi.ok) : fedexApi.ok;
     if (!apiOk) continue; // nothing to compare against this run
     const c = carriers.find(x => x.name === name);
     const svc = c && c.services.find(s => s.service === service);
@@ -795,7 +785,7 @@ async function main() {
   }
 
   if (upsPublished.ok && upsApi.ok) {
-    for (const [service, key] of [['Standard Service within Canada','standardCanada'],['Standard Service to the U.S.','standardUS'],['Domestic Express and Expedited','domesticExpress']]) {
+    for (const [service, key] of Object.entries(UPS_ROW_KEYS)) {
       const posted = upsPublished.value.services.find(s => s.service === service).current;
       if (Math.abs(posted - upsApi.value[key]) > 0.01) backupCheck.mismatches.push({ row: `UPS Canada|${service}`, api: upsApi.value[key], posted, kind: 'published-api-conflict' });
     }

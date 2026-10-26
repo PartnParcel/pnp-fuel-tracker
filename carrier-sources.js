@@ -87,4 +87,65 @@ function staleWeeks(carrier, previous, today) {
   const since = previous?.staleSince || today;
   return {staleSince:since,staleWeeks:Math.floor((Date.parse(monday(today))-Date.parse(monday(since)))/(7*DAY))+1};
 }
-module.exports={UPS_URL,UPS_FIELDS,CP_LABELS,dateISO,monday,offset,parseUPS,parseCanadaPost,applyPublished,staleWeeks};
+// UPS Rating API (list rates, clean tracker account). UPS charges fuel on the
+// base rate plus fuel-applicable surcharges ("Services Affected" on its fuel
+// page lists peak surcharges), so the posted percent is fuel / (base + those).
+// 434 = Surge Fee (peak), added to every quote from Oct 26 2026: verified that
+// fuel / (base + 434) reproduces all four posted rows that week. 573 =
+// International Processing Fee, which fuel does not apply to. Any other code
+// is unknown: refuse rather than guess, so the row goes stale and alerts.
+const UPS_FUEL_CODE = '375';
+const UPS_FUEL_BASE_CODES = new Set(['434']);
+const UPS_NON_FUEL_CODES = new Set(['573']);
+const UPS_FAMILIES = {
+  standardCanada: { dest: 'domestic', codes: ['11'] },
+  domesticExpress: { dest: 'domestic', codes: ['01', '02', '13', '14'] },
+  standardUS: { dest: 'us', codes: ['11'] },
+  // International Express, Expedited & 3 Day Select: Worldwide Express (07),
+  // Expedited (08), Express Plus (54), Saver (65), 3 Day Select to the US (12).
+  international: { dest: ['us', 'intl'], codes: ['07', '08', '12', '54', '65'] }
+};
+function upsFuelPercents(ratedShipments) {
+  const arr = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
+  const money = v => parseFloat(v?.MonetaryValue ?? 'NaN');
+  const out = {};
+  for (const s of arr(ratedShipments)) {
+    const base = money(s.BaseServiceCharge);
+    let fuel = null, fuelBase = base;
+    for (const c of arr(s.ItemizedCharges)) {
+      if (c.Code === UPS_FUEL_CODE) fuel = money(c);
+      else if (UPS_FUEL_BASE_CODES.has(c.Code)) fuelBase += money(c);
+      else if (!UPS_NON_FUEL_CODES.has(c.Code)) throw new Error(`UPS quote has an unrecognized charge ${c.Code} ${c.Description || c.SubType || ''}`.trim());
+    }
+    if (fuel == null || !(base > 0) || !Number.isFinite(fuelBase)) continue;
+    out[s.Service?.Code] = (fuel / fuelBase) * 100;
+  }
+  return out;
+}
+function upsRatesFromQuotes(quotes) {
+  const result = {};
+  for (const [key, { dest, codes }] of Object.entries(UPS_FAMILIES)) {
+    const values = [];
+    for (const d of [].concat(dest)) for (const code of codes) {
+      const raw = quotes[d]?.[code];
+      if (raw == null) continue;
+      const snapped = Math.round(raw * 4) / 4;
+      // UPS posts in 0.25-point steps; penny rounding keeps a correct ratio
+      // within a few hundredths. Further off means the formula no longer holds.
+      if (Math.abs(raw - snapped) > 0.05) throw new Error(`UPS ${key} service ${code} (${d}) gives ${raw.toFixed(3)}%, not a posted step`);
+      values.push(snapped);
+    }
+    if (!values.length) throw new Error(`UPS quote missing ${key} services`);
+    if (!values.every(v => v === values[0])) throw new Error(`UPS ${key} services disagree: ${values.join(', ')}`);
+    if (!(values[0] > 0 && values[0] < 100)) throw new Error(`UPS ${key} out of range: ${values[0]}`);
+    result[key] = values[0];
+  }
+  return result;
+}
+const UPS_ROW_KEYS = {
+  'Standard Service within Canada': 'standardCanada',
+  'Standard Service to the U.S.': 'standardUS',
+  'International Express, Expedited & 3 Day Select': 'international',
+  'Domestic Express and Expedited': 'domesticExpress'
+};
+module.exports={UPS_URL,UPS_FIELDS,CP_LABELS,UPS_ROW_KEYS,dateISO,monday,offset,parseUPS,parseCanadaPost,applyPublished,staleWeeks,upsFuelPercents,upsRatesFromQuotes};
