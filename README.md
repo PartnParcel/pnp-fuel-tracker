@@ -13,11 +13,11 @@ The rate engine remains a diagnostic cross-check. Its drift does not replace an 
 
 ## Automation
 
-GitHub refreshes hourly on Mondays at minute 17, twice daily on other days, and after merged source changes. Runs serialize. Dependencies use the reviewed lockfile with lifecycle scripts disabled; regression tests run before publishing. Data is written atomically. Existing secrets stay in GitHub.
+GitHub refreshes Mondays at 11:00 UTC, and after merged source changes. Runs serialize. Dependencies use the reviewed lockfile with lifecycle scripts disabled; regression tests run before publishing. Data is written atomically. Existing secrets stay in GitHub.
 
-One GitHub exception issue opens when source checks or publication fail. It changes only when the problem changes and closes after recovery. GitHub manages notifications; this is not a new email sender. A total GitHub outage cannot report itself: the widget independently treats data older than 36 hours, or not verified in the current week, as stale.
+Verification findings stay in the workflow run log; no automatic exception issues or added alert permissions. Existing GitHub notification settings remain unchanged. A total GitHub outage cannot report itself: the widget treats data older than seven days, or not verified in the current week, as stale.
 
-The separately approved business-box cron runs `ops/fuel-sync.py --apply` hourly. It refreshes only the fuel widget's server-rendered rows, includes temporary list rates and mobile change indicators, and backs up/readbacks WordPress changes. It has a dry-run default. See DEPLOY.md for the one-time installation and rollback.
+The separately approved business-box cron runs `ops/fuel-sync.py --apply` at the existing daily 13:20 UTC time. It refreshes only the fuel widget's server-rendered rows, includes temporary list rates and mobile change indicators, and backs up/readbacks WordPress changes. It has a dry-run default. See DEPLOY.md for the one-time installation and rollback.
 
 This removes routine weekly edits. Carrier schema changes, credential outages or conflicting published rates remain exceptions requiring investigation; stale labels stay visible until verified.
 

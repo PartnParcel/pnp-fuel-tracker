@@ -859,7 +859,7 @@ async function main() {
   const output = {
     version: 1,
     generatedAt: new Date().toISOString(),
-    nextUpdate: 'Checked daily; retried hourly on Mondays',
+    nextUpdate: 'Checked Mondays',
     inputs: {
       nrcanDieselCAD: prices.nrcanDieselCAD,
       nrcanLagApplied: lagTrusted.nrcan,

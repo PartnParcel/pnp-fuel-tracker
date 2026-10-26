@@ -4,7 +4,7 @@ const {CARRIERS} = require('../fuel-engine');
 function problems(data, now=new Date()) {
   const out=[];
   const age=(now-Date.parse(data.generatedAt))/3600000;
-  if(!Number.isFinite(age)||age>36||age<-.1) out.push('Published data timestamp is missing, future-dated or more than 36 hours old.');
+  if(!Number.isFinite(age)||age>168||age<-.1) out.push('Published data timestamp is missing, future-dated or more than 7 days old.');
   const names=[...CARRIERS.map(c=>c.name),'Canada Post','Canpar Express'];
   for(const name of new Set(names)) {
     const c=data.carriers?.find(c=>c.name===name);
@@ -17,3 +17,9 @@ function problems(data, now=new Date()) {
   return out.sort();
 }
 module.exports={problems};
+
+if(require.main===module){
+  const data=JSON.parse(require("fs").readFileSync("fuel-rates.json","utf8"));
+  const findings=problems(data);
+  console.log(findings.length?findings.join("\n"):"All carrier rows verified.");
+}
