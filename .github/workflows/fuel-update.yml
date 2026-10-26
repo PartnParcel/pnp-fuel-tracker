@@ -2,10 +2,8 @@ name: Fuel Surcharge Update
 
 on:
   schedule:
-    # Retry throughout Monday; check twice daily on other days for corrections.
-    # Off-hour minute reduces contention. GitHub scheduling is not a clock SLA.
-    - cron: '17 * * * 1'
-    - cron: '17 11,17 * * 0,2-6'
+    # Weekly Monday refresh, preserving the original cadence.
+    - cron: '0 11 * * 1'
   workflow_dispatch: {}
   push:
     branches: [main]
@@ -17,7 +15,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
   group: fuel-publish
@@ -70,9 +67,5 @@ jobs:
           git diff --staged --quiet || git commit -m "Fuel rates updated $(date -u +%Y-%m-%d)"
           git push
 
-      - name: Maintain one actionable exception issue
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FUEL_BUILD_OUTCOME: ${{ steps.build.outcome == 'success' && steps.publish.outcome == 'success' && 'success' || 'failure' }}
-        run: node ops/report-health.js
+      - name: Record verification diagnostics in the run log
+        run: node ops/health.js

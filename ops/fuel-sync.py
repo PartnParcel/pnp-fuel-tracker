@@ -20,6 +20,7 @@ import datetime
 import pathlib
 import fcntl
 import hashlib
+import time
 from zoneinfo import ZoneInfo
 
 FEED = "https://raw.githubusercontent.com/PartnParcel/pnp-fuel-tracker/main/fuel-rates.json"
@@ -57,16 +58,16 @@ def render(data):
         now = datetime.datetime.now(datetime.timezone.utc)
         today = now.astimezone(ZoneInfo('America/Toronto')).date()
         week_start = (today - datetime.timedelta(days=today.weekday())).isoformat()
-        if not car.get('lastVerified') or car['lastVerified'] < week_start:
+        if not car.get('lastVerified') or car['lastVerified'] < week_start or any(s.get('effectiveTo', '9999-12-31') < today.isoformat() for s in svcs):
             status = 'stale'
         try:
             stamp = datetime.datetime.fromisoformat(data['generatedAt'].replace('Z', '+00:00'))
             age = (now - stamp).total_seconds() / 3600
-            if not 0 <= age <= 36:
+            if not 0 <= age <= 168:
                 status = 'stale'
         except (KeyError, ValueError, TypeError):
             status = 'stale'
-        label = {"stale": "last verified", "failed": "source failed"}.get(status, "verified")
+        label = {"stale": "last verified", "failed": "source failed"}.get(status, "checked")
         cls = status if status in ("stale", "failed") else ""
         for i, s in enumerate(svcs):
             cells = ""
@@ -94,6 +95,8 @@ def render(data):
             note = ''
             if isinstance(s.get('listRate'), (int, float)):
                 note = '<span class="pnp-list-rate">Temporary rate · list <s>%s</s></span>' % pct(s['listRate'])
+            if s.get('effectiveDate') and s.get('effectiveTo'):
+                note += '<span class="pnp-list-rate">Applies %s–%s</span>' % (esc(s['effectiveDate']), esc(s['effectiveTo']))
             compact = '<span class="ch-inline">%s</span>' % change
             cells += (
                 '<td class="service">%s</td><td class="num">%s%s%s</td>'
@@ -114,6 +117,7 @@ def mark_stale(body):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--wait-current-week', action='store_true', help="Monday job waits for this week's published feed, up to 20 hours")
     parser.add_argument('--apply', action='store_true', help='Write the reviewed change; otherwise dry-run')
     parser.add_argument('--install-widget', type=pathlib.Path, help='One-time upgrade of the exact fuel widget only')
     parser.add_argument('--data', type=pathlib.Path, help='Local reviewed feed for dry-run only')
@@ -128,8 +132,22 @@ def main():
         if args.data:
             data = json.loads(args.data.read_text())
         else:
-            with urllib.request.urlopen(FEED, timeout=30) as r:
-                data = json.load(r)
+            deadline = time.monotonic() + (20 * 3600 if args.wait_current_week else 0)
+            while True:
+                try:
+                    with urllib.request.urlopen(FEED, timeout=30) as r:
+                        data = json.load(r)
+                    today = datetime.datetime.now(ZoneInfo('America/Toronto')).date()
+                    week = (today - datetime.timedelta(days=today.weekday())).isoformat()
+                    if not args.wait_current_week or data.get('generatedAt', '')[:10] >= week:
+                        break
+                except (OSError, ValueError):
+                    if time.monotonic() >= deadline:
+                        raise
+                if time.monotonic() >= deadline:
+                    raise ValueError('No current-week publication within Monday wait window')
+                time.sleep(300)
+
         if not data.get('carriers'):
             raise ValueError('feed has no carriers')
         body = render(data)

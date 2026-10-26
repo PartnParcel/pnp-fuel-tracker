@@ -28,7 +28,9 @@ const xlsx = require('xlsx');                       // reads EIA .xls files
 const cheerio = require('cheerio');                 // reads HTML pages
 const { XMLParser } = require('fast-xml-parser');   // reads RSS feeds
 const { computeRates } = require('./fuel-engine.js');
-const { UPS_URL, dateISO, parseUPS, parseCanadaPost, applyPublished, staleWeeks } = require('./carrier-sources.js');
+const { UPS_URL, UPS_ROW_KEYS, dateISO, parseUPS, parseCanadaPost, applyPublished, staleWeeks, upsFuelPercents, upsRatesFromQuotes } = require('./carrier-sources.js');
+const {URLS,parseUPSPage,parseFedEx,parsePurolator,parseLoomis}=require('./published-pages');
+const {readPage}=require('./browser-source');
 // Every source has a deadline; one hung source must not block the refresh.
 const fetch = (url, opts = {}) => globalThis.fetch(url, { ...opts, signal: opts.signal || AbortSignal.timeout(25000) });
 
@@ -332,12 +334,11 @@ async function fetchFedexApi() {
 
 // UPS Rating API. Authenticated against a clean tracker-only account with no
 // negotiated pricing and no NegotiatedRatesIndicator on the request, so UPS
-// returns published rates. Fuel arrives as itemized charge code 375; the
-// published percent is fuel / BaseServiceCharge, which lands exactly on UPS's
-// posted number for domestic and CA-to-US Standard (validated against the
-// posted page, week of June 8 2026). International is NOT computed this way:
-// UPS applies fuel to a different base on international shipments, so that row
-// stays on the band-table derivation until its posted value is calibrated.
+// returns published rates. Fuel arrives as itemized charge 375 and is charged on
+// the base rate plus fuel-applicable surcharges, so the posted percent is
+// fuel / (base + those surcharges); upsFuelPercents in carrier-sources.js holds
+// the charge codes. Covers all four UPS rows, International included (validated
+// against UPS's posted rates, week of Oct 26 2026). Scheduled and unattended.
 async function fetchUpsApi() {
   const id = process.env.UPS_CLIENT_ID;
   const secret = process.env.UPS_CLIENT_SECRET;
@@ -374,44 +375,16 @@ async function fetchUpsApi() {
     });
     if (!res.ok) throw new Error(`UPS rate call responded ${res.status}`);
     const json = await res.json();
-    const list = json?.RateResponse?.RatedShipment || [];
-    const shipments = Array.isArray(list) ? list : [list];
-    const out = {};
-    for (const s of shipments) {
-      const baseCharge = parseFloat(s.BaseServiceCharge?.MonetaryValue ?? 'NaN');
-      const itemized = s.ItemizedCharges ? (Array.isArray(s.ItemizedCharges) ? s.ItemizedCharges : [s.ItemizedCharges]) : [];
-      const fuelItem = itemized.find(c => c.Code === '375' || /fuel/i.test(c.Description || ''));
-      const fuel = fuelItem ? parseFloat(fuelItem.MonetaryValue) : null;
-      if (fuel != null && baseCharge > 0) out[s.Service?.Code] = (fuel / baseCharge) * 100;
-    }
-    return out;
+    return upsFuelPercents(json?.RateResponse?.RatedShipment);
   }
 
-  // UPS posts rates in 0.25-point steps; penny rounding in a quote puts the
-  // ratio within a few hundredths of the posted number, so snap to the step.
-  const snap = r => Math.round(r * 4) / 4;
-
-  const domestic = await shop({ City: 'Montreal', StateProvinceCode: 'QC', PostalCode: 'H2Y1C6', CountryCode: 'CA' });
-  const us = await shop({ City: 'New York', StateProvinceCode: 'NY', PostalCode: '10001', CountryCode: 'US' });
-
-  // Domestic express family: codes 01 Express, 02 Expedited, 13 Saver, 14 Early.
-  const expressCodes = ['01', '02', '13', '14'].filter(c => domestic[c] != null);
-  const expressRates = expressCodes.map(c => snap(domestic[c]));
-  if (!expressRates.length || domestic['11'] == null || us['11'] == null) {
-    throw new Error('UPS response missing Standard or Express services');
-  }
-  if (!expressRates.every(r => r === expressRates[0])) {
-    throw new Error(`UPS domestic express family disagrees after snapping: ${expressRates.join(', ')}`);
-  }
-  const result = {
-    standardCanada: snap(domestic['11']),
-    domesticExpress: expressRates[0],
-    standardUS: snap(us['11'])
-  };
-  for (const [k, v] of Object.entries(result)) {
-    if (!(v > 0 && v < 100)) throw new Error(`UPS ${k} out of range: ${v}`);
-  }
-  return result;
+  // Fuel % per service off fuel / (base + fuel-applicable surcharges); see
+  // upsRatesFromQuotes for the step and family-agreement checks.
+  return upsRatesFromQuotes({
+    domestic: await shop({ City: 'Montreal', StateProvinceCode: 'QC', PostalCode: 'H2Y1C6', CountryCode: 'CA' }),
+    us: await shop({ City: 'New York', StateProvinceCode: 'NY', PostalCode: '10001', CountryCode: 'US' }),
+    intl: await shop({ City: 'London', PostalCode: 'EC1A1BB', CountryCode: 'GB' })
+  });
 }
 
 // Purolator E-Ship Estimating API. Pre-wired: activates automatically the week
@@ -495,36 +468,7 @@ async function fetchPurolatorApi() {
 // we take the tariff (first %, the standard published rate) for the row whose
 // effective date is the most recent on or before today. Forward-dated rows
 // (next week's rate) are correctly ignored until they take effect.
-async function fetchLoomisWorldwide() {
-  const res = await fetch(SOURCES.loomisPage, { headers: BROWSER_HEADERS });
-  if (!res.ok) throw new Error(`Loomis page responded ${res.status}`);
-  const html = await res.text();
-  const h = html.search(/Worldwide Service/i);
-  if (h < 0) throw new Error('Loomis Worldwide section not found');
-  // Bound to the Worldwide table region so Domestic-table rows cannot leak in.
-  // Markup between a date cell and its rate cell is unpredictable, so pair by
-  // position: each row's tariff is the first percentage appearing after its
-  // effective date. The tariff column is the first %; the volume-discount % is
-  // the second and is ignored.
-  const seg = html.slice(h, h + 3000);
-  // Loomis writes effective dates as MM-DD-YYYY (dashes), unlike Canpar's slashes.
-  const dates = [...seg.matchAll(/(\d{2})-(\d{2})-(\d{4})/g)].map(m => ({ i: m.index, date: `${m[3]}-${m[1]}-${m[2]}` }));
-  const pcts = [...seg.matchAll(/(\d{1,2}\.\d{2})\s*%/g)].map(m => ({ i: m.index, v: parseFloat(m[1]) }));
-  const rows = dates.map(d => {
-    const p = pcts.find(x => x.i > d.i);
-    return p ? { date: d.date, tariff: p.v } : null;
-  }).filter(Boolean);
-  if (!rows.length) throw new Error('Loomis Worldwide rows not parsed');
-  const today = todayISO();
-  const eligible = rows.filter(r => r.date <= today).sort((a, b) => (a.date < b.date ? 1 : -1));
-  const pick = eligible[0];
-  if (!pick || Date.parse(today) - Date.parse(pick.date) >= 7 * 86400000) throw new Error('Loomis current effective week missing');
-  if (!(pick.tariff > 0 && pick.tariff < 100)) throw new Error(`Loomis Worldwide out of range: ${pick.tariff}`);
-  return { rate: pick.tariff, effectiveDate: pick.date };
-}
-
-// ----------------------------------------------------------------------------
-// ORCHESTRATOR. Fetch everything, fall back per-source, assemble the JSON.
+// // ORCHESTRATOR. Fetch everything, fall back per-source, assemble the JSON.
 // ----------------------------------------------------------------------------
 
 function loadPrevious() {
@@ -554,10 +498,12 @@ async function main() {
   const canpar = await safe('Canpar endpoint', fetchCanpar);
   const canadaPost = await safe('Canada Post page', fetchCanadaPost);
   const upsPublished = await safe('UPS published history', async () => {
-    const res = await fetchRetry(UPS_URL, { headers: BROWSER_HEADERS });
-    return parseUPS(await res.json(), todayISO());
+    try {const res=await fetchRetry(UPS_URL,{headers:BROWSER_HEADERS});return parseUPS(await res.json(),todayISO());}
+    catch {return readPage(URLS.UPS,parseUPSPage,todayISO());}
   });
-  const loomisWW = await safe('Loomis Worldwide page', fetchLoomisWorldwide);
+  const loomisPage = await safe('Loomis published page',()=>readPage(URLS.Loomis,parseLoomis,todayISO()));
+  const fedexPage = await safe('FedEx published page',()=>readPage(URLS.FedEx,parseFedEx,todayISO()));
+  const puroPage = await safe('Purolator published page',()=>readPage(URLS.Purolator,parsePurolator,todayISO()));
   const fedexApi = await safe('FedEx Rating API', fetchFedexApi);
   const upsApi = await safe('UPS Rating API', fetchUpsApi);
   const puroApi = await safe('Purolator E-Ship API', fetchPurolatorApi);
@@ -641,48 +587,15 @@ async function main() {
       carriers.push({
         name, url: 'https://www.canpar.com/en/shipping/fuel_surcharge.htm',
         cadence: 'weekly', status: 'ok', lastVerified: todayISO(),
-        services: [{ service: 'Domestic Canada', current: canpar.value.rate, previous: prevRate }]
+        services: [{ service: 'Domestic Canada', current: canpar.value.rate, previous: prevRate, effectiveDate:canpar.value.effectiveFrom, effectiveTo:canpar.value.effectiveTo }]
       });
     } else if (p) {
       carriers.push({ ...p, status: 'stale' });
     }
   }
 
-  // Loomis: Domestic = Canpar endpoint value (shared band table). Worldwide = derived jet.
-  {
-    const name = 'Loomis Express';
-    const p = prevCarrier(prev, name);
-    const d = derived.find(c => c.name === name);
-    const worldwide = d ? d.services.find(s => /Worldwide/i.test(s.service)) : null;
-    const pWorld = p ? (p.services || []).find(s => /Worldwide/i.test(s.service)) : null;
-    const pDom = p ? (p.services || []).find(s => /Domestic/i.test(s.service)) : null;
-    const services = [];
-    // Domestic from Canpar endpoint
-    if (canpar.ok) {
-      services.push({ service: 'Domestic Express and Ground Service', current: canpar.value.rate, previous: pDom ? pDom.current : canpar.value.rate });
-    } else if (pDom) {
-      services.push({ ...pDom });
-    }
-    // Worldwide from the Loomis published page (authoritative tariff rate).
-    // Fall back to last-known, then to the jet derivation only as a last resort.
-    let wwFresh = false;
-    if (loomisWW.ok) {
-      services.push({ service: 'Worldwide Service', current: loomisWW.value.rate, previous: pWorld ? pWorld.current : loomisWW.value.rate });
-      wwFresh = true;
-    } else if (pWorld) {
-      services.push({ ...pWorld });
-    } else if (worldwide && worldwide.current != null) {
-      services.push({ service: 'Worldwide Service', current: worldwide.current, previous: worldwide.current });
-    }
-    const fresh = canpar.ok && wwFresh;
-    carriers.push({
-      name, url: 'https://www.loomisexpress.com/loomship/Services/FuelSurcharges',
-      cadence: 'weekly', status: fresh ? 'ok' : 'stale',
-      lastVerified: fresh ? todayISO() : (p ? p.lastVerified : null), services
-    });
-  }
-
   const sourcePreviousKeys = new Set();
+  applyPublished(carriers,prev,'Loomis Express',loomisPage,URLS.Loomis,todayISO(),sourcePreviousKeys);
   applyPublished(carriers, prev, 'Canada Post', canadaPost, SOURCES.canadaPostPage, todayISO(), sourcePreviousKeys);
 
   // Snapshot every derived value before the carrier APIs overwrite them, so we
@@ -724,6 +637,25 @@ async function main() {
     'https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges',
     todayISO(), sourcePreviousKeys);
 
+  // UPS's published-history file answers automated requests with a bot check,
+  // so when it can't be read the Rating API carries all four rows. Both failing
+  // leaves the rows stale; an estimate is never published as verified.
+  if (!upsPublished.ok && upsApi.ok) {
+    const i = carriers.findIndex(c => c.name === 'UPS Canada');
+    const old = prevCarrier(prev, 'UPS Canada');
+    carriers[i] = {
+      name: 'UPS Canada',
+      url: 'https://www.ups.com/ca/en/support/shipping-support/shipping-costs-rates/fuel-surcharges',
+      cadence: 'weekly', status: 'ok', lastVerified: todayISO(),
+      services: Object.entries(UPS_ROW_KEYS).map(([service, key]) => {
+        const o = old && (old.services || []).find(s => s.service === service);
+        return { service, current: upsApi.value[key], previous: o ? o.current : upsApi.value[key] };
+      })
+    };
+    const v = upsApi.value;
+    console.log(`[ups-api] list rates: Standard CA ${v.standardCanada}%, Standard US ${v.standardUS}%, International ${v.international}%, Domestic Express ${v.domesticExpress}%`);
+  }
+
   // 3d. Purolator exact rate from E-Ship, once credentials exist. While the
   //     verified override below is still active it wins (same number); delete
   //     the override when this goes live.
@@ -745,6 +677,13 @@ async function main() {
     const i = carriers.findIndex(c => c.name === name), old = prevCarrier(prev, name);
     if (i >= 0) carriers[i] = { ...(old || carriers[i]), status: 'stale', lastVerified: old?.lastVerified || null };
   }
+
+  // Published service-period tables own both current and previous; APIs are
+  // fallback sources when a carrier blocks both direct and rendered page reads.
+  if(fedexPage.ok)for(const name of ['FedEx Express','FedEx Ground and pickup services'])
+    applyPublished(carriers,prev,name,{ok:true,value:fedexPage.value[name]},URLS.FedEx,todayISO(),sourcePreviousKeys);
+  if(puroPage.ok)applyPublished(carriers,prev,'Purolator',puroPage,URLS.Purolator,todayISO(),sourcePreviousKeys);
+  carriers.find(c=>c.name==='Purolator').cadence='monthly';
 
   // 3e. CONSISTENCY CHECK: the backup derivation, computed with properly
   //     lagged inputs, must agree with the carrier APIs. A mismatch means a
@@ -773,7 +712,7 @@ async function main() {
   const backupCheck = { date: todayISO(), compared: 0, mismatches: [], withinTolerance: [], skipped: [] };
   for (const [key, { dep, tol }] of Object.entries(ROW_INPUT)) {
     const [name, service] = key.split('|');
-    const apiOk = name === 'UPS Canada' ? upsPublished.ok : fedexApi.ok;
+    const apiOk = name === 'UPS Canada' ? (upsPublished.ok || upsApi.ok) : fedexApi.ok;
     if (!apiOk) continue; // nothing to compare against this run
     const c = carriers.find(x => x.name === name);
     const svc = c && c.services.find(s => s.service === service);
@@ -795,7 +734,7 @@ async function main() {
   }
 
   if (upsPublished.ok && upsApi.ok) {
-    for (const [service, key] of [['Standard Service within Canada','standardCanada'],['Standard Service to the U.S.','standardUS'],['Domestic Express and Expedited','domesticExpress']]) {
+    for (const [service, key] of Object.entries(UPS_ROW_KEYS)) {
       const posted = upsPublished.value.services.find(s => s.service === service).current;
       if (Math.abs(posted - upsApi.value[key]) > 0.01) backupCheck.mismatches.push({ row: `UPS Canada|${service}`, api: upsApi.value[key], posted, kind: 'published-api-conflict' });
     }
@@ -815,6 +754,7 @@ async function main() {
       const carrier = carriers.find(c => c.name === o.carrier);
       const svc = carrier && carrier.services.find(s => s.service === o.service);
       if (!svc) { console.error(`[override] no match for ${o.carrier} / ${o.service}`); continue; }
+      if(sourcePreviousKeys.has(`${o.carrier}|${o.service}`)) continue; // fresh page outranks temporary overrides
       svc.current = o.rate;
       svc.previous = ('previous' in o) ? o.previous : null;
       carrier.status = 'ok';
@@ -827,21 +767,14 @@ async function main() {
   }
 
   // ---- PREVIOUS normalization (re-run safe, week-over-week) ----
-  // "previous" must reflect the last DISTINCT prior rate, not the value from
-  // the most recent build run. Without this, same-week re-runs collapse
-  // previous onto current and the change pill wrongly reads "No change".
-  // Rule: if current changed vs the prior file, capture the prior current as
-  // previous; if current is unchanged, carry the prior file's previous forward
-  // untouched (so the last real move persists until the next real move).
+  // Compare with the preceding carrier period. Same-period retries preserve
+  // that comparison; a new period advances it even when the rate is unchanged.
   for (const c of carriers) {
     const pc = prevCarrier(prev, c.name);
     for (const svc of c.services) {
       if (overriddenKeys.has(`${c.name}|${svc.service}`)) continue; // override owns previous
       if (sourcePreviousKeys.has(`${c.name}|${svc.service}`)) continue; // page supplied it
-      const ps = pc && (pc.services || []).find(s => s.service === svc.service);
-      if (!ps || ps.current == null) continue; // no prior data: leave as already set
-      if (svc.current !== ps.current) svc.previous = ps.current;
-      else svc.previous = (ps.previous != null ? ps.previous : ps.current);
+      svc.previous = require('./published-pages').previousForPeriod(c,pc,svc,todayISO());
     }
   }
 
@@ -859,7 +792,7 @@ async function main() {
   const output = {
     version: 1,
     generatedAt: new Date().toISOString(),
-    nextUpdate: 'Checked daily; retried hourly on Mondays',
+    nextUpdate: 'Checked Mondays',
     inputs: {
       nrcanDieselCAD: prices.nrcanDieselCAD,
       nrcanLagApplied: lagTrusted.nrcan,

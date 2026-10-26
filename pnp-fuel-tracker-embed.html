@@ -145,7 +145,7 @@
     font-size: 11px;
     font-weight: 500;
     color: var(--pnp-muted);
-    white-space: nowrap;
+    white-space: normal;
   }
   #pnp-fuel-tracker .pnp-list-rate s { text-decoration: line-through; }
   #pnp-fuel-tracker table {
@@ -352,11 +352,11 @@
   <div class="pnp-meta">
     <div class="pnp-meta-item">
       <span class="pnp-meta-label">Next update</span>
-      <span class="pnp-meta-value"><span class="pnp-live-dot"></span><span id="pnp-next-update">Checked daily</span></span>
+      <span class="pnp-meta-value"><span class="pnp-live-dot"></span><span id="pnp-next-update">Checked Mondays</span></span>
     </div>
     <div class="pnp-meta-item">
       <span class="pnp-meta-label">Update cadence</span>
-      <span class="pnp-meta-value">Daily checks; hourly Monday retries</span>
+      <span class="pnp-meta-value">Weekly on Mondays</span>
     </div>
   </div>
 
@@ -446,13 +446,13 @@
   function renderTable(fuelData) {
     // A stopped scheduler must not leave an old green "verified" label forever.
     const age = (Date.now() - Date.parse(fuelData.generatedAt)) / 3600000;
-    const staleFeed = !Number.isFinite(age) || age > 36 || age < -0.1;
+    const staleFeed = !Number.isFinite(age) || age > 168 || age < -0.1;
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
     const week = new Date(today + 'T12:00:00Z');
     week.setUTCDate(week.getUTCDate() - (week.getUTCDay() + 6) % 7);
     const weekStart = week.toISOString().slice(0,10);
     fuelData = { ...fuelData, carriers: fuelData.carriers.map(c => ({ ...c,
-      status: staleFeed || !c.lastVerified || c.lastVerified < weekStart ? 'stale' : c.status
+      status: staleFeed || !c.lastVerified || c.lastVerified < weekStart || c.services.some(s => s.effectiveTo && s.effectiveTo < today) ? 'stale' : c.status
     })) };
     const tbody = root.querySelector('#pnp-fuel-tbody');
     const rows = [];
@@ -466,7 +466,7 @@
 
         if (isFirstOfGroup) {
           const statusClass = carrier.status === 'stale' ? 'stale' : carrier.status === 'failed' ? 'failed' : '';
-          const statusLabel = carrier.status === 'stale' ? 'last verified' : carrier.status === 'failed' ? 'source failed' : 'verified';
+          const statusLabel = carrier.status === 'stale' ? 'last verified' : carrier.status === 'failed' ? 'source failed' : 'checked';
           const cadence = carrier.cadence === 'monthly' ? 'resets monthly' : 'resets weekly';
           cells += `
             <td class="carrier" rowspan="${rowspan}">
@@ -486,13 +486,14 @@
         // charged, with the struck-through list rate beside it.
         const listNote = (typeof svc.listRate === 'number' && typeof svc.current === 'number')
           ? `<span class="pnp-list-rate" title="Temporary reduced rate; the carrier's list rate is ${svc.listRate.toFixed(2)}%">Temporary rate · list <s>${svc.listRate.toFixed(2)}%</s></span>` : '';
+        const periodNote = svc.effectiveDate && svc.effectiveTo ? `<span class="pnp-list-rate">Applies ${formatVerified(svc.effectiveDate)}–${formatVerified(svc.effectiveTo)}</span>` : '';
         const change = (typeof svc.current === 'number' && typeof svc.previous === 'number')
           ? renderChange(svc.current, svc.previous) : '';
         const changeCompact = (typeof svc.current === 'number' && typeof svc.previous === 'number')
           ? renderChangeCompact(svc.current, svc.previous) : '';
         cells += `
           <td class="service">${svc.service}</td>
-          <td class="num">${curr}${listNote}<span class="ch-inline">${changeCompact}</span></td>
+          <td class="num">${curr}${listNote}${periodNote}<span class="ch-inline">${changeCompact}</span></td>
           <td class="num hide-mobile">${prevCell}</td>
           <td class="change">${change}</td>
         `;
